@@ -1,0 +1,83 @@
+#!/bin/sh
+set -e
+
+# Include Bundler path
+PATH=$PATH:/usr/local/bin
+
+### Unicorn Variables ###
+TIMEOUT=15
+APP_ROOT=/home/laprimaire/bot
+PID_PATH=$APP_ROOT/pid
+LOG_PATH=$APP_ROOT/logs
+PID=$PID_PATH/pid
+CMD="bundle exec unicorn -D -c $APP_ROOT/config/unicorn.conf.rb -E production $APP_ROOT/config.ru"
+
+action="$1"
+set -u
+
+old_pid="$PID.oldbin"
+
+cd $APP_ROOT || exit 1
+
+sig () {
+  test -s "$PID" && kill -$1 `cat $PID`
+}
+
+oldsig () {
+  test -s $old_pid && kill -$1 `cat $old_pid`
+}
+
+workersig () {
+  workerpid=$PID_PATH/worker.$2.pid
+  test -s "$workerpid" && kill -$1 `cat $workerpid`
+}
+
+create_pid_path () {
+  test -d $PID_PATH || ( mkdir -p $PID_PATH && chown www-data.www-data $PID_PATH )
+}
+
+create_log_path () {
+  test -d $LOG_PATH || ( mkdir -p $LOG_PATH && chown www-data.www-data $LOG_PATH )
+}
+
+case $action in
+start)
+  create_pid_path
+  create_log_path
+  sig 0 && echo >&2 "Already running" && exit 0
+  $CMD
+;;
+stop)
+  sig QUIT && exit 0
+  echo >&2 "Not running"
+;;
+force-stop)
+  sig TERM && exit 0
+  echo >&2 "Not running"
+;;
+restart|reload)
+  sig HUP && echo reloaded OK && exit 0
+  echo >&2 "Couldn't reload, starting '$CMD' instead"
+  $CMD
+;;
+upgrade)
+  sig USR2 && exit 0
+  echo >&2 "Couldn't upgrade, starting '$CMD' instead"
+  $CMD
+;;
+status)
+  sig 0 && echo "running with pid `cat $PID`" && exit 0
+  echo stopped && exit 1
+;;
+kill_worker)
+  workersig QUIT $2 && exit 0
+  echo >&2 "Worker not running"
+;;
+reopen-logs)
+  sig USR1
+;;
+*)
+  echo >&2 "Usage: $0 <start|stop|status|restart|upgrade|force-stop|reopen-logs|kill_worker>"
+  exit 1
+;;
+esac

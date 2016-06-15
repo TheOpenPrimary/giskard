@@ -1,3 +1,6 @@
+*.local.*
+*.pid
+*.log
 *.gem
 *.rbc
 /.config

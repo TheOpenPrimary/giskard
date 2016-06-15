@@ -1,0 +1,7 @@
+source 'https://rubygems.org'
+gem 'telegram-bot-ruby', '0.4.1'
+gem 'bundler'
+gem 'rake'
+gem 'grape', '0.12.0'
+gem 'unicorn', '4.7.0'
+gem 'rack-cors'
