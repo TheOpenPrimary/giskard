@@ -287,6 +287,6 @@ $ bundle exec unicorn -E production -c config/unicorn.conf
 Giskard has been developed with performance in mind. Ruby haters will say it is surprising given the choice of Ruby but when it comes to bots, raw execution performance should not be regarded as the most important performance factor. Indeed, memory usage is much more important for 2 reasons :
 
 * as bots try to mimic normal users behavior, they do not send their answer as fast as possible as it would not look natural. This means that a request can take up to several seconds to be completed. Not because there are heavy computations behind but because Giskard purposedly "sleeps" between messages to emulate a normal user behavior. Note that Giskard can be configured to never sleep in case you want Giskard to answer as fast as possible.
-* to handle large loads, you will need to spawn a lot of Giskard instances (in the form of unicorn processes) to be able to handle parallel requests. This is why minizing memory usage of a Giskard process was very important.
+* to handle large loads, you will need to spawn a lot of Giskard instances (in the form of unicorn processes) to be able to handle parallel requests. This is why minimizing memory usage of a Giskard process was very important.
 
-Giskard has been architected to use as little memory as possible. To give you an example, in our complex Giskard bot (using ruby gems for mandrill, postgresql, algolia, aws, google cs etc..) 1 Giskard instance uses less than 1MB.
+Giskard has been architected to use as little memory as possible. To give you an example, in our complex Giskard bot (using ruby gems for mandrill, postgresql, algolia, aws, google cs etc..) every Giskard instance uses less than 1MB of memory.
