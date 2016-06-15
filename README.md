@@ -1,16 +1,17 @@
 # Giskard Bot Engine
 
-Giskard is a bot engine to create advanced bots for modern messenging apps. It natively supports Telegram messenger bots. Facebook messenger bot support is around the corner. Giskard is written in ruby (not rails) using [telegram-bot-ruby](https://github.com/atipugin/telegram-bot-ruby) and the [Grape API framework](https://github.com/ruby-grape/grape).
+Giskard is a bot engine to create advanced bots for modern messenging apps. It natively supports Telegram messenger bots. Facebook messenger and Slack bots support are not yet supported but Giskard has been architected to allow the support of other platforms easily. Giskard is written in ruby (not rails) using [telegram-bot-ruby](https://github.com/atipugin/telegram-bot-ruby) and the [Grape API framework](https://github.com/ruby-grape/grape), it is made to be used in *webhook* mode (vs polling) and serves request through the unicorn web server by default.
 
 
 # Table of content
 
 - [What is Giskard?](https://github.com/telegraph-ai/giskard#what-is-giskard)
-- [how Giskard works](https://github.com/telegraph-ai/giskard#how-giskard-works)
-   - [screens](https://github.com/telegraph-ai/giskard#screens)
-   - [callbacks](https://github.com/telegraph-ai/giskard#callbacks)
-   - [messages](https://github.com/telegraph-ai/giskard#messages)
-   - [the user object](https://github.com/telegraph-ai/giskard#the-user-object)
+- [Why Giskard?](https://github.com/telegraph-ai/giskard#why-giskard)
+- [How Giskard works](https://github.com/telegraph-ai/giskard#how-giskard-works)
+   - [Screens](https://github.com/telegraph-ai/giskard#screens)
+   - [Callbacks](https://github.com/telegraph-ai/giskard#callbacks)
+   - [Messages](https://github.com/telegraph-ai/giskard#messages)
+   - [User object](https://github.com/telegraph-ai/giskard#user-object)
 - [Giskard setup](https://github.com/telegraph-ai/giskard#giskard-setup)
    - [Pre-requirements](https://github.com/telegraph-ai/giskard#pre-requirements)
    - [Installing Giskard](https://github.com/telegraph-ai/giskard#installing-giskard)
@@ -21,19 +22,27 @@ Giskard is a bot engine to create advanced bots for modern messenging apps. It n
 
 Giskard enables you to easily create complex Telegram bots (Facebook messenger bots support coming soon). Giskard has been created to leverage [Telegram Bot API](https://core.telegram.org/bots/api) and, in particular, the possibility to interact with the user through custom keyboard actions. Giskard is a bot engine that enables you to easily create complex and customized user experience. To this date, Giskard does not implement any sort of AI (otherwise Giskard would have been named [R. Daneel Olivaw](https://en.wikipedia.org/wiki/R._Daneel_Olivaw)) although it could be "easily" added. Giskard enables you to easily implement flexible [Finite-state machine](https://en.wikipedia.org/wiki/Finite-state_machine) for your bot.
 
-Giskard has been developed to provide [LaPrimaire.org](https://laprimaire.org) with a [telegram bot](https://www.youtube.com/watch?v=AUoArIkCECo) to enable french citizens to crowdsource their election candidates for the 2017 french presidential elections.
+## Why Giskard?
+
+Giskard has been developed to address several issues :
+* **Keyboard-based bots > AI-based bots**. While most people today relate bots to some kind of AI, it is still very complicated to create complex bots using pure free text interaction, especially when you are not a machine learning, deep learning expert. To address this issue, today's messenging platforms (especially [Telegram](https://telegram.org) and now Facebook messenger) now provide extremely powerful bot APIs that allow bots to interact with users through customized buttons and/or keyboards. Using buttons and customized keyboards makes it particularly straightforward for users to interact with the bot has they have a limited, pre-defined choice of answers. For developers, using customized buttons and/or keyboards is also a great news because it removes the need to develop a powerful AI engine to achieve basic functionalities. It does not means that AI should not be used of course but at least it is not a requirement anymore.
+* **Finite-state machine implementation is not an easy**. If an AI engine is now optional, it does not make developing a complex bot a lot easier. Indeed, as a developer, you now need to implement finite-state machine like behavior for your bot to interact with the user. If this is easy to do when your bot has very few states, it can become quite messy if your bot starts being more complex.
+
+This is why we developped Giskard. Giskard aims at making it easy to develop complex keyboard-based bots. Giskard has been developed for a real world project with real users (50.000 as this is written). Giskard has been developed to provide [LaPrimaire.org](https://laprimaire.org) with a [telegram bot](https://www.youtube.com/watch?v=AUoArIkCECo) to enable french citizens to crowdsource their election candidates for the 2017 french presidential elections. Due to the nature of the project, it was clear to us that Giskard had to be open-source.
+
+The name *Giskard* comes from [R. Giskard Reventlov](http://asimov.wikia.com/wiki/R._Giskard_Reventlov) from the Asimov Robot series. In Asimov's novels, Giskard is not supposed to be a very advanced robot (like R. Daneel Olivaw) but a very strong a reliable one. However, throughout the story, Giskard will prove to be a robot more advanced than expected... I stop here to avoid any spoiler :)
 
 ## How Giskard works
 
 Giskard's logic is implemented via *Add-ons*. When Giskard is launched, it loads all its available add-ons. Each add-on provide Giskard with a specific feature set. An add-on is a combination of 3 different entities :
 
-- *screens* define the user-experience and the workflow of an add-on.
-- *callbacks* define the business logic of an add-on.
-- *messages*  define the localized message strings of an add-on.
+- *Screens* define the user-experience and the workflow of an add-on.
+- *Callbacks* define the business logic of an add-on.
+- *Messages*  define the localized message strings of an add-on.
 
 The add-ons should be located in the ```bot/add-ons/``` directory. They are loaded automatically by Giskard at startup.
 
-### screens
+### Screens
 
 Giskard uses screens to determine what to display to the user at a given state. For a given module (add-on), screens are defined as a ruby hash. Here is an example with the screens of the Home add-on:
 ```ruby
@@ -90,7 +99,7 @@ Bot.updateScreens(screens)
 Bot.addMenu({:home=>{:menu=>{:kbd=>"home/menu"}}})
 ```
 
-### callbacks
+### Callbacks
 
 A screen can have a callback as an attribute. Callbacks are method where the business logic is being executed.
 
@@ -146,7 +155,7 @@ Every callback gets 3 arguments as an input :
 
 A callback *must* return the output of the ```get_screen(msg,user,screen)``` method.
 
-### messages
+### Messages
 
 Giskard messages for a specific add-on are defined as a ruby hash inside the given add-on. Messages id are in the form ```<namespace>/<screen_name>``` and must match the name of the related screen ids. Messages can have 1 or several lines. Each line is being sent as a separate message from Giskard. Here is an example with the Home add-on :
 ```ruby
@@ -214,7 +223,7 @@ The add-on registers its messages to Giskard by calling the ```Bot.updateMessage
 Bot.updateMessages(messages)
 ```
 
-### the user object
+### User object
 
 The user object is defined in [bot/user.rb](https://github.com/telegraph-ai/giskard/blob/master/bot/users.rb). You can extend it as you wish but it should at least have the following structure:
 ```ruby
