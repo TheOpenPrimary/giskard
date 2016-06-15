@@ -36,13 +36,13 @@ module Bot
 				'buffer'=>""
 			}
 			user_settings={
-				'blocked'=>{
-					'abuse'=>false # the user has clearly done bad things 
-				},
-				'actions'=>{
-					'first_help_given'=>false
-				}
+				'blocked'=>{ 'abuse'=>false }, # the user has clearly done bad things 
+				'actions'=>{ 'first_help_given'=>false },
+				'locale'=>'fr'
 			}
+			## WARNING ## 
+			# This is for example purpose only and will work with only 1 unicorn process.
+			# If you use more than 1 unicorn process, you should save users in shared memory or a database to ensure data consistency between unicorn processes.
 			@users[user.id]={
 				'firstname'=>user.first_name,
 				'lastname'=>user.last_name,
@@ -63,12 +63,9 @@ module Bot
 				'buffer'=>""
 			}
 			user_settings={
-				'blocked'=>{
-					'abuse'=>false # the user has clearly done bad things 
-				},
-				'actions'=>{
-					'first_help_given'=>false
-				}
+				'blocked'=>{ 'abuse'=>false }, # the user has clearly done bad things 
+				'actions'=>{ 'first_help_given'=>false },
+				'locale'=>'fr'
 			}
 			self.update_settings(user[:id],user_settings)
 			@users[user[:id]]['session']={

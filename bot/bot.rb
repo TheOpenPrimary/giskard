@@ -75,6 +75,19 @@ module Bot
 		:speaker=>"\u{1F4E2}"
 	}
 	@@messages={
+		:en=>{
+			:system=>{
+				:default=><<-END,
+I do not have any program loaded so far so my powers might be pretty limited... but you can still try me anyway :)
+END
+				:dont_understand=><<-END,
+Oops, sorry %{firstname} I am afraid I did not understand what you told me #{@@emoticons[:crying_face]} Please use the buttons on the keyboard below to communicate with me please. If you don't see any keyboard, please type /start to return to the main menu.
+END
+				:something_wrong=><<-END,
+It looks like a problem occurred #{@@emoticons[:head_bandage_face]} We'll have to start all over again, sorry about that #{@@emoticons[:confused]}
+END
+			}
+		},
 		:fr=>{
 			:system=>{
 				:default=><<-END,
@@ -88,19 +101,18 @@ Apparemment, un petit souci informatique est survenu #{@@emoticons[:head_bandage
 END
 			}
 		}
-
 	}
 	@@screens={
 		:system=>{
 			:default=>{
-				:text=>@@messages[:fr][:system][:default],
+				#:text=>@@messages[:fr][:system][:default],
 			},
 			:dont_understand=>{
-				:text=>@@messages[:fr][:system][:dont_understand],
+				#:text=>@@messages[:fr][:system][:dont_understand],
 				:keep_kbd=>true
 			},
 			:something_wrong=>{
-				:text=>@@messages[:fr][:system][:something_wrong]
+				#:text=>@@messages[:fr][:system][:something_wrong]
 			}
 		}
 	}
@@ -151,5 +163,10 @@ END
 
 	def self.emoticons
 		@@emoticons
+	end
+
+	def self.getMessage(msg_id,locale='en')
+		ctx,name=msg_id.split('/')
+		return @@messages[locale.to_sym][ctx.to_sym][name.to_sym]
 	end
 end

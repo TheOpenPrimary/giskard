@@ -11,7 +11,7 @@ APP_ROOT = File.expand_path(File.dirname(File.dirname(__FILE__)))
 if ENV['RACK_ENV']=='production' then
 	worker_processes 90
 else
-	worker_processes 4
+	worker_processes 1
 end
 
 # Help ensure your application will always spawn in the symlinked

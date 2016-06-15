@@ -20,18 +20,31 @@ module Help
 	def self.included(base)
 		Bot.log.info "loading Help add-on"
 		messages={
+			:en=>{
+				:help=>{
+					:first_help_ok_answer=>"Ok understood #{Bot.emoticons[:thumbs_up]}",
+					:first_help_ok=><<-END,
+Great, let's get back to it !
+END
+					:first_help=><<-END,
+Sorry I did not understand what you told me #{Bot.emoticons[:crying_face]}
+Please use the keyboard to communicate with me
+image:static/images/keyboard-button.png
+Click on the "Ok understood" button of the keyboard below to continue.
+END
+				}
+			},
 			:fr=>{
 				:help=>{
+					:first_help_ok_answer=>"Ok bien compris #{Bot.emoticons[:thumbs_up]}",
 					:first_help_ok=><<-END,
 Parfait, reprenons !
 END
 					:first_help=><<-END,
 Désolé, je ne comprends pas ce que vous m'écrivez #{Bot.emoticons[:crying_face]}
-Pour communiquer avec moi, il est plus simple d'utiliser les boutons qui s'affichent sur le clavier (en bas de l'écran) lorsque celui-ci apparaît.
-De temps en temps, je vous demanderai d'écrire mais, le plus souvent, le clavier suffit #{Bot.emoticons[:smile]}
-Si, par une fausse manipulation, vous faîtes disparaître les boutons du clavier, vous pouvez toujours le réafficher en cliquant sur l'icône suivante :
+Merci d'utiliser le clavier pour communiquer avec moi
 image:static/images/keyboard-button.png
-Cliquez-sur le bouton "OK bien compris !" du clavier ci-dessous pour continuer.
+Cliquez sur le bouton "Ok bien compris" du clavier ci-dessous pour continuer.
 END
 				}
 			}
@@ -39,12 +52,10 @@ END
 		screens={
 			:help=>{
 				:first_help_ok=>{
-					:answer=>"Ok bien compris #{Bot.emoticons[:thumbs_up]}",
-					:text=>messages[:fr][:help][:first_help_ok],
+					:answer=>"help/first_help_ok_answer",
 					:callback=>"help/first_help_cb",
 				},
 				:first_help=>{
-					:text=>messages[:fr][:help][:first_help],
 					:callback=>"help/first_help_cb",
 					:save_session=>true,
 					:kbd=>["help/first_help_ok"],
@@ -59,15 +70,16 @@ END
 
 	def help_first_help_cb(msg,user,screen)
 		Bot.log.info "help_first_help_cb"
+		locale=self.get_locale(user)
 		if screen[:save_session] then
 			@users.next_answer(user[:id],'answer')
 		else
 			screen=@users.previous_state(user[:id])
-			screen=self.find_by_name("home/welcome") if screen.nil?
+			screen=self.find_by_name("home/welcome",locale) if screen.nil?
 			if !screen[:text].nil? then
-				screen[:text]="Parfait, reprenons !\n"+screen[:text]
+				screen[:text]=Bot.getMessage("help/first_help_ok",locale)+"\n"+screen[:text]
 			else
-				screen[:text]="Parfait, reprenons !"
+				screen[:text]=Bot.getMessage("help/first_help_ok",locale)
 			end
 			@users.update_settings(user[:id],{'actions'=>{'first_help_given'=> true}})
 		end

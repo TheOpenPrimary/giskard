@@ -37,28 +37,39 @@ module Bot
 			@screens.each do |k,v|
 				v.each do |k1,v1|
 					if (!v1[:kbd].nil?) then
-						@keyboards[self.path([k,k1])]=[]
+						SUPPORTED_LOCALES.each do |l|
+							@keyboards[l]={} if @keyboards[l].nil?
+							@keyboards[l][self.path([k,k1])]=[]
+						end
 					end
 					if (!v1[:answer].nil?) then
-						@answers[v1[:answer]]={} if @answers[v1[:answer]].nil?
-						raise "Conflict of answers detected in add-on \"#{k}\" : \"#{v1[:answer]}\"" if not @answers[v1[:answer]][k].nil?
-						@answers[v1[:answer]][k]=k1
+						SUPPORTED_LOCALES.each do |l|
+							answer=Bot.getMessage(v1[:answer],l)
+							raise "Missing translation for message #{v1[:answer]} in locale #{l}" if answer.nil?
+							@answers[l]={} if @answers[l].nil?
+							@answers[l][answer]={} if @answers[l][answer].nil?
+							raise "Conflict of answers detected in add-on \"#{k}\": \"#{answer}\" (locale #{l})" if not @answers[l][answer][k].nil?
+							@answers[l][answer][k]=k1
+						end
 					end
 				end
 			end
-			@keyboards.each do |k,v|
-				t=nil
-				n1,n2=self.nodes(k).map &:to_sym
-				size=@screens[n1][n2][:kbd].length
-				@screens[n1][n2][:kbd].each_with_index do |u,i|
-					m1,m2=self.nodes(u).map &:to_sym
-					item=@screens[m1][m2][:answer]
-					@keyboards[k].push(item)
+			@keyboards.each do |l,kbd|
+				kbd.each do |k,v|
+					t=nil
+					n1,n2=self.nodes(k).map &:to_sym
+					size=@screens[n1][n2][:kbd].length
+					@screens[n1][n2][:kbd].each_with_index do |u,i|
+						m1,m2=self.nodes(u).map &:to_sym
+						raise "Screen identifier #{m1}/#{m2} does not exist" if @screens[m1].nil? or @screens[m1][m2].nil?
+						item=Bot.getMessage(@screens[m1][m2][:answer],l)
+						@keyboards[l][k].push(item)
+					end
 				end
+			end
 			@answers.freeze
 			@screens.freeze
 			@keyboards.freeze
-			end
 		end
 
 		def path(nodes)
@@ -77,13 +88,16 @@ module Bot
 			path.split('/',2).join('_') unless path.nil?
 		end
 
+		def get_locale(user)
+			return SUPPORTED_LOCALES.include?(user['settings']['locale']) ? user['settings']['locale'] : 'en'
+		end
+
 		def get(msg,update_id)
 			res,options=nil
 			user=@users.get(msg.from,msg.date)
 			# we check that this message has not already been answered (i.e. telegram sending a msg we already processed)
 			return nil,nil if @users.already_answered(user[:id],update_id) and not DEBUG
 			session=user['session']
-			Bot.log.info "user read session : #{user}"
 			if user['bot_upgrade'].to_i==1 and not update_id==-1 then
 				Bot.log.warn "Bot upgrade detected" 
 				update_id=-1
@@ -97,18 +111,19 @@ module Bot
 				session=@users.update_session(user[:id],{'api_payload'=>api_payload}) if !api_payload.nil?
 			end
 			input=session['expected_input']
+			locale=self.get_locale(user)
 			session['current']="home/welcome" if RESET_WORDS.include?(msg.text)
 			if (input=='answer' or RESET_WORDS.include?(msg.text)) then
 				# we expect the user to have used the proposed keyboard to answer
-				screen=self.find_by_answer(msg.text,self.context(session['current']))
+				screen=self.find_by_answer(msg.text,self.context(session['current']),locale)
 				if not screen.nil? then
 					res,options=get_screen(screen,user,msg)
 					user['session']=@users.get_session(user[:id])
 					current=user['session']['current']
-					screen=self.find_by_name(current) if screen[:id]!=current and !current.nil?
+					screen=self.find_by_name(current,locale) if screen[:id]!=current and !current.nil?
 					jump_to=screen[:jump_to]
 					while !jump_to.nil? do
-						next_screen=find_by_name(jump_to)
+						next_screen=find_by_name(jump_to,locale)
 						a,b=get_screen(next_screen,user,msg)
 						user['session']=@users.get_session(user[:id])
 						res="" unless res
@@ -118,7 +133,7 @@ module Bot
 					end
 				else
 					if not user['settings']['actions']['first_help_given'] and not IGNORE_CONTEXT.include?(self.context(user['session']['current'])) then
-						screen=self.find_by_name("help/first_help")
+						screen=self.find_by_name("help/first_help",locale)
 					else
 						res,options=self.dont_understand(user,msg)
 					end
@@ -130,23 +145,23 @@ module Bot
 						input_size=session['expected_input_size']-1
 						buffer= msg.text.nil? ? session['buffer'] : session['buffer']+msg.text
 						session=@users.update_session(user[:id],{'buffer'=>buffer})
-						screen=self.find_by_name(session['callback'])
+						screen=self.find_by_name(session['callback'],locale)
 						session_update={'expected_input_size'=>input_size}
 						session_update['callback']=nil if input_size==0
 						session=@users.update_session(user[:id],session_update)
 						user['session']=session
 						res,options=self.method(callback).call(msg,user,screen) if input_size==0
-						screen=self.find_by_name(session['current']) if session['current']
+						screen=self.find_by_name(session['current'],locale) if session['current']
 						jump_to=screen[:jump_to]
 						while !jump_to.nil? do
-							next_screen=find_by_name(jump_to)
+							next_screen=find_by_name(jump_to,locale)
 							user['session']=@users.get_session(user[:id])
 							a,b=get_screen(next_screen,user,msg)
 							res+=a unless a.nil?
 							options.merge!(b) unless b.nil?
 							user['session']=@users.get_session(user[:id])
 							current=user['session']['current']
-							next_screen=self.find_by_name(current) if next_screen[:id]!=current and !current.nil?
+							next_screen=self.find_by_name(current,locale) if next_screen[:id]!=current and !current.nil?
 							jump_to=next_screen[:jump_to]
 						end
 
@@ -154,7 +169,6 @@ module Bot
 				end
 			end
 			res,options=self.dont_understand(user,msg) if res.nil? # if res.nil? then something is fishy
-			Bot.log.info "user save session : #{@users.get_session(user[:id])}"
 			@users.save_user_session(user[:id])
 			return res,options
 		end
@@ -162,20 +176,21 @@ module Bot
 		def dont_understand(user,msg,reset=false)
 			# dedicated method to not affect user session
 			Bot.log.info "#{__method__} #{msg}"
+			locale=self.get_locale(user)
 			if not user['settings']['actions']['first_help_given'] then
-				screen=self.find_by_name("help/first_help")
+				screen=self.find_by_name("help/first_help",locale)
 				res,options=self.format_answer(screen,user)
 				callback=self.to_callback(screen[:callback].to_s)
 				self.method(callback).call(msg,user,screen) if self.respond_to?(callback)
 			else
-				screen=self.find_by_name("system/dont_understand")
+				screen=self.find_by_name("system/dont_understand",locale)
 				res,options=self.format_answer(screen,user)
 			end
 			return res,options
 		end
 
 		def get_screen(screen,user,msg)
-			Bot.log.info "#{__method__} #{screen}"
+			Bot.log.info "#{__method__} #{screen[:id]}"
 			res,options=nil
 			return nil,nil if screen.nil?
 			callback=self.to_callback(screen[:callback].to_s) unless screen[:callback].nil?
@@ -197,7 +212,7 @@ module Bot
 			return res,options
 		end
 
-		def find_by_name(name)
+		def find_by_name(name,locale='en')
 			Bot.log.info "#{__method__} #{name}"
 			n1,n2=self.nodes(name)
 			begin
@@ -205,6 +220,8 @@ module Bot
 				if screen then
 					screen[:id]=name 
 					screen=screen.clone
+					screen[:text]=Bot.getMessage(name,locale)
+					screen[:answer]=Bot.getMessage(screen[:answer],locale) unless screen[:answer].nil?
 				end
 			rescue
 				screen=nil
@@ -212,9 +229,9 @@ module Bot
 			return screen
 		end
 
-		def find_by_answer(answer,ctx=nil)
+		def find_by_answer(answer,ctx=nil,locale='en')
 			Bot.log.info "#{__method__} #{answer} context: #{ctx}"
-			tmp=@answers[answer]
+			tmp=@answers[locale][answer]
 			return nil if tmp.nil?
 			if tmp.length==1
 				ctx,screen_id=tmp.flatten
@@ -226,6 +243,8 @@ module Bot
 			if screen then
 				screen[:id]=self.path([ctx,screen_id])
 				screen=screen.clone
+				screen[:text]=Bot.getMessage(self.path([ctx,screen_id]),locale)
+				screen[:answer]=Bot.getMessage(screen[:answer],locale) unless screen[:answer].nil?
 			end
 			return screen
 		end
@@ -238,12 +257,13 @@ module Bot
 				id: user[:id],
 				username: user['username']
 			} unless screen.nil? or screen[:text].nil?
+			locale=self.get_locale(user)
 			options={}
-			kbd=@keyboards[screen[:id]].clone if @keyboards[screen[:id]]
+			kbd=@keyboards[locale][screen[:id]].clone if @keyboards[locale][screen[:id]]
 			if screen[:kbd_del] then
 				screen[:kbd_del].each do |k|
 					n1,n2=self.nodes(k)
-					kbd.delete(@screens[n1][n2][:answer])
+					kbd.delete(Bot.getMessage(@screens[n1][n2][:answer],locale))
 				end
 			end
 			screen[:kbd_add].each { |k| kbd.unshift(k) } if screen[:kbd_add]

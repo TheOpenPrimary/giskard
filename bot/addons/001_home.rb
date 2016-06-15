@@ -20,25 +20,61 @@ module Home
 	def self.included(base)
 		Bot.log.info "loading Home add-on"
 		messages={
+			:en=>{
+				:home=>{
+					:welcome_answer=>"/start",
+					:welcome=><<-END,
+Hello %{firstname} !
+My name is Giskard, I am an intelligent bot.. or at least as intelligent as you make me #{Bot.emoticons[:smile]}
+This is an example program for you to get acustomed to how I work.
+But enough talking, let's begin !
+END
+					:menu_answer=>"#{Bot.emoticons[:home]} Home",
+					:menu=><<-END,
+What do you want to do ? Please use below buttons to tell me what you would like to do.
+END
+					:ask_email_answer=>"My email",
+					:ask_email=><<-END,
+What is your email ?
+END
+					:email_saved=><<-END,
+Your email is %{email} !
+END
+					:email_wrong=><<-END,
+Hmmm... %{email} doesn't look like a valid email #{Bot.emoticons[:confused]}
+END
+					:my_action_2_answer=>"Action 2",
+					:my_action_2=><<-END,
+Texte for action 2
+END
+				}
+			},
 			:fr=>{
 				:home=>{
+					:welcome_answer=>"/start",
 					:welcome=><<-END,
 Bonjour %{firstname} !
 Je suis Victoire, votre guide pour LaPrimaire #{Bot.emoticons[:blush]}
 Mon rôle est de vous accompagner et de vous informer tout au long du déroulement de La Primaire.
 Mais assez discuté, commençons !
 END
+					:menu_answer=>"#{Bot.emoticons[:home]} Accueil",
 					:menu=><<-END,
 Que voulez-vous faire ? Utilisez les boutons du menu ci-dessous pour m'indiquer ce que vous souhaitez faire.
 END
-					:action_1=><<-END,
-Texte pour l'action 1
+					:ask_email_answer=>"Mon email",
+					:ask_email=><<-END,
+Quel est votre email ?
 END
-					:action_2=><<-END,
+					:email_saved=><<-END,
+Votre email est %{email} !
+END
+					:email_wrong=><<-END,
+Hmmm... %{email} n'est pas un email valide #{Bot.emoticons[:confused]}
+END
+					:my_action_2_answer=>"Action 2",
+					:my_action_2=><<-END,
 Texte pour l'action 2
-END
-					:abuse=><<-END,
-Désolé votre comportement sur LaPrimaire.org est en violation de la Charte que vous avez acceptée et a entraîné votre exclusion  #{Bot.emoticons[:crying_face]}
 END
 				}
 			}
@@ -46,34 +82,32 @@ END
 		screens={
 			:home=>{
 				:welcome=>{
-					:answer=>"/start",
-					:text=>messages[:fr][:home][:welcome],
+					:answer=>"home/welcome_answer",
 					:disable_web_page_preview=>true,
 					:callback=>"home/welcome",
 					:jump_to=>"home/menu"
 				},
 				:menu=>{
-					:answer=>"#{Bot.emoticons[:home]} Accueil",
-					:text=>messages[:fr][:home][:menu],
+					:answer=>"home/menu_answer",
 					:callback=>"home/menu",
 					:parse_mode=>"HTML",
-					:kbd=>["home/my_action_1","home/my_action_2"],
+					:kbd=>["home/ask_email","home/my_action_2"],
 					:kbd_options=>{:resize_keyboard=>true,:one_time_keyboard=>false,:selective=>true}
 				},
-				:my_action_1=>{
-					:answer=>"Action 1",
-					:text=>messages[:fr][:home][:action_1],
+				:ask_email=>{
+					:answer=>"home/ask_email_answer",
+					:callback=>"home/ask_email",
+				},
+				:email_saved=>{
+					:jump_to=>"home/menu"
+				},
+				:email_wrong=>{
 					:jump_to=>"home/menu"
 				},
 				:my_action_2=>{
-					:answer=>"Action 2",
-					:text=>messages[:fr][:home][:action_2],
+					:answer=>"home/my_action_2_answer",
 					:jump_to=>"home/menu"
-				},
-				:abuse=>{
-					:text=>messages[:fr][:home][:abuse],
-					:disable_web_page_preview=>true
-				},
+				}
 			}
 		}
 		Bot.updateScreens(screens)
@@ -83,7 +117,7 @@ END
 
 	def home_welcome(msg,user,screen)
 		Bot.log.info "#{__method__}"
-		screen=self.find_by_name("home/menu")
+		screen=self.find_by_name("home/menu",self.get_locale(user))
 		return self.get_screen(screen,user,msg)
 	end
 
@@ -91,6 +125,25 @@ END
 		Bot.log.info "#{__method__}"
 		screen[:kbd_del]=["home/menu"] #comment if you want the home button to be displayed on the home menu
 		@users.next_answer(user[:id],'answer')
+		return self.get_screen(screen,user,msg)
+	end
+
+	def home_ask_email(msg,user,screen)
+		Bot.log.info "#{__method__}"
+		@users.next_answer(user[:id],'free_text',1,"home/save_email_cb")
+		return self.get_screen(screen,user,msg)
+	end
+
+	def home_save_email_cb(msg,user,screen)
+		email=user['session']['buffer']
+		Bot.log.info "#{__method__}: #{email}"
+		if email.match(/\A[^@\s]+@([^@\s]+\.)+[^@\s]+\z/).nil? then
+			screen=self.find_by_name("home/email_wrong",self.get_locale(user))
+			screen[:text]=screen[:text] % {:email=>email}
+			return self.get_screen(screen,user,msg) 
+		end
+		screen=self.find_by_name("home/email_saved",self.get_locale(user))
+		screen[:text]=screen[:text] % {:email=>email}
 		return self.get_screen(screen,user,msg)
 	end
 end

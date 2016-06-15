@@ -20,6 +20,31 @@ module Api
 	def self.included(base)
 		Bot.log.info "loading Api add-on"
 		messages={
+			:en=>{
+				:api=>{
+					:access_granted=><<-END,
+Good news %{firstname}, you can now access Giskard... here we go again ! #{Bot.emoticons[:face_sunglasses]}
+END
+					:allow_user=><<-END,
+Good news %{firstname}, your access to Giskard has been reinitialized... you can talk to me again ! #{Bot.emoticons[:face_sunglasses]}
+END
+					:unblock_user=><<-END,
+Good news %{firstname}, your access to Giskard has been re-activated... you can talk to me again ! #{Bot.emoticons[:face_sunglasses]}
+END
+					:ban_user=><<-END,
+%{firstname}, your behavior is violating our code of conduct. This is why your account has been suspended #{Bot.emoticons[:crying_face]}
+END
+					:reset_user=><<-END,
+%{firstname}, your account has been reinitialized. Type /start to continue.
+END
+					:broadcast=><<-END,
+Sorry for interrupting but I just received the following message that I've been asked to forward to you :
+"%{broadcast_msg}"
+Click on the "#{Bot.emoticons[:back]} Back" button as soon as you want to get back where you were.
+END
+					:back=>"#{Bot.emoticons[:back]} Back"
+				}
+			},
 			:fr=>{
 				:api=>{
 					:access_granted=><<-END,
@@ -42,38 +67,33 @@ Excusez-moi pour cette interruption mais je viens de recevoir le message suivant
 "%{broadcast_msg}"
 Cliquez sur le bouton "#{Bot.emoticons[:back]} Retour" dès que vous souhaitez reprendre où vous en étiez.
 END
+					:back=>"#{Bot.emoticons[:back]} Retour"
 				}
 			}
 		}
 		screens={
 			:api=>{
 				:access_granted=>{
-					:text=>messages[:fr][:api][:access_granted],
 					:disable_web_page_preview=>true,
 					:jump_to=>"welcome/start"
 				},
 				:allow_user=>{
-					:text=>messages[:fr][:api][:allow_user],
 					:disable_web_page_preview=>true,
 					:jump_to=>"home/welcome"
 				},
 				:ban_user=>{
-					:text=>messages[:fr][:api][:ban_user],
 					:disable_web_page_preview=>true,
 					:jump_to=>"home/welcome"
 				},
 				:reset_user=>{
-					:text=>messages[:fr][:api][:reset_user],
 					:disable_web_page_preview=>true,
 					:jump_to=>"home/welcome"
 				},
 				:unblock_user=>{
-					:text=>messages[:fr][:api][:unblock_user],
 					:disable_web_page_preview=>true,
 					:jump_to=>"home/welcome"
 				},
 				:broadcast=>{
-					:text=>messages[:fr][:api][:broadcast],
 					:save_session=>true,
 					:disable_web_page_preview=>true,
 					:kbd=>["api/back"],
@@ -81,7 +101,7 @@ END
 					:callback=>"api/broadcast"
 				},
 				:back=>{
-					:answer=>"#{Bot.emoticons[:back]} Retour",
+					:answer=>"api/back",
 					:callback=>"api/broadcast"
 				}
 			}
