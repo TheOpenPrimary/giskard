@@ -46,7 +46,7 @@ module Bot
 			@users[user.id]={
 				'firstname'=>user.first_name,
 				'lastname'=>user.last_name,
-				'username'=>user.last_name,
+				'username'=>user.username,
 				'session'=>bot_session,
 				'settings'=>user_settings
 			}
@@ -55,26 +55,20 @@ module Bot
 
 		def reset(user)
 			Bot.log.info "reset user #{user}"
-			bot_session={
+			bot_session={ # mandatory. you can extend it but not remove attributes.
 				'last_update_id'=>nil,
 				'current'=>nil,
 				'expected_input'=>"answer",
 				'expected_input_size'=>-1,
 				'buffer'=>""
 			}
-			user_settings={
+			user_settings={ # only the locale attribute is mandatory.
 				'blocked'=>{ 'abuse'=>false }, # the user has clearly done bad things 
 				'actions'=>{ 'first_help_given'=>false },
 				'locale'=>'fr'
 			}
 			self.update_settings(user[:id],user_settings)
-			@users[user[:id]]['session']={
-				'last_update_id'=>nil,
-				'current'=>nil,
-				'expected_input'=>"answer",
-				'expected_input_size'=>-1,
-				'buffer'=>""
-			}
+			@users[user[:id]]['session']=bot_session
 			self.save_user_session(user[:id])
 		end
 
