@@ -1,4 +1,4 @@
-[![Telegram Chat](https://img.shields.io/badge/telegram-chat-blue.svg)](https://telegram.me/joinchat/BVqq1gjMxoWJJv9oEC_7YQ) [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000?style=plastic)]() 
+[![Telegram Chat](https://img.shields.io/badge/telegram-chat-blue.svg)](https://telegram.me/joinchat/BVqq1gjMxoWJJv9oEC_7YQ) ![license](https://img.shields.io/badge/license-Apache%202.0-green.svg)
 
 # Giskard Bot Engine 
 
