@@ -2,7 +2,6 @@
 
 Giskard is a bot engine to create advanced bots for modern messenging apps. It natively supports Telegram messenger bots. Facebook messenger and Slack bots support are not yet supported but Giskard has been architected to allow the support of other platforms easily. Giskard is written in ruby (not rails) using [telegram-bot-ruby](https://github.com/atipugin/telegram-bot-ruby) and the [Grape API framework](https://github.com/ruby-grape/grape), it is made to be used in *webhook* mode (vs polling) and serves request through the unicorn web server by default.
 
-
 # Table of content
 
 - [What is Giskard?](https://github.com/telegraph-ai/giskard#what-is-giskard)
@@ -24,9 +23,10 @@ Giskard enables you to easily create complex Telegram bots (Facebook messenger b
 
 ## Why Giskard?
 
-Giskard has been developed to address several issues :
-* **Keyboard-based bots > AI-based bots**. While most people today relate bots to some kind of AI, it is still very complicated to create complex bots using pure free text interaction, especially when you are not a machine learning, deep learning expert. To address this issue, today's messenging platforms (especially [Telegram](https://telegram.org) and now Facebook messenger) now provide extremely powerful bot APIs that allow bots to interact with users through customized buttons and/or keyboards. Using buttons and customized keyboards makes it particularly straightforward for users to interact with the bot has they have a limited, pre-defined choice of answers. For developers, using customized buttons and/or keyboards is also a great news because it removes the need to develop a powerful AI engine to achieve basic functionalities. It does not means that AI should not be used of course but at least it is not a requirement anymore.
-* **Finite-state machine implementation is not an easy**. If an AI engine is now optional, it does not make developing a complex bot a lot easier. Indeed, as a developer, you now need to implement finite-state machine like behavior for your bot to interact with the user. If this is easy to do when your bot has very few states, it can become quite messy if your bot starts being more complex.
+Giskard has been developed for several reasons, among which :
+
+* **Keyboard-based bots > AI-based bots**. While most people today relate bots to some kind of AI, it is still very complicated to create complex bots using pure free text interaction, especially when you are not a machine learning or deep learning expert. To address this issue, today's messenging platforms (especially [Telegram](https://telegram.org) and now Facebook messenger) now provide extremely powerful bot APIs that allow bots to interact with users through customized buttons and/or keyboards. Using buttons and customized keyboards makes it particularly straightforward for users to interact with the bot has they have a limited, pre-defined choice of answers. For developers, using customized buttons and/or keyboards is also a great news because it removes the need to develop a powerful AI engine to achieve basic functionalities. It does not means that AI should not be used of course but at least it is not a requirement anymore.
+* **Implementing complex finite-state machines is not easy**. If an AI engine is now optional, it does not make developing a complex bot a lot easier. Indeed, as a developer, you now need to implement finite-state machine like behavior for your bot to interact with the user. If this is easy to do when your bot has very few states, it can become quite messy if your bot starts being more complex.
 
 This is why we developped Giskard. Giskard aims at making it easy to develop complex keyboard-based bots. Giskard has been developed for a real world project with real users (50.000 as this is written). Giskard has been developed to provide [LaPrimaire.org](https://laprimaire.org) with a [telegram bot](https://www.youtube.com/watch?v=AUoArIkCECo) to enable french citizens to crowdsource their election candidates for the 2017 french presidential elections. Due to the nature of the project, it was clear to us that Giskard had to be open-source.
 
