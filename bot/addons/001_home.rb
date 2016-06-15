@@ -34,9 +34,6 @@ END
 					:abuse=><<-END,
 Désolé votre comportement sur LaPrimaire.org est en violation de la Charte que vous avez acceptée et a entraîné votre exclusion  #{Bot.emoticons[:crying_face]}
 END
-					:not_allowed=><<-END,
-Désolé mais au vu des informations que vous nous avez fournies, vous ne remplissez pas les conditions pour pouvoir participer à LaPrimaire.org #{Bot.emoticons[:crying_face]}
-END
 				}
 			}
 		}
@@ -61,10 +58,6 @@ END
 					:text=>messages[:fr][:home][:abuse],
 					:disable_web_page_preview=>true
 				},
-				:not_allowed=>{
-					:text=>messages[:fr][:home][:not_allowed],
-					:disable_web_page_preview=>true
-				}
 			}
 		}
 		Bot.updateScreens(screens)
@@ -75,13 +68,12 @@ END
 	def home_welcome(msg,user,screen)
 		Bot.log.info "#{__method__}"
 		screen=self.find_by_name("home/menu")
-		#screen[:kbd_del]=["home/menu"]
 		return self.get_screen(screen,user,msg)
 	end
 
 	def home_menu(msg,user,screen)
 		Bot.log.info "#{__method__}"
-		#screen[:kbd_del]=["home/menu"]
+		#screen[:kbd_del]=["home/menu"] #uncomment if you don't want the home button to be displayed on the home menu
 		@users.next_answer(user[:id],'answer')
 		return self.get_screen(screen,user,msg)
 	end
