@@ -31,6 +31,12 @@ END
 					:menu=><<-END,
 Que voulez-vous faire ? Utilisez les boutons du menu ci-dessous pour m'indiquer ce que vous souhaitez faire.
 END
+					:action_1=><<-END,
+Texte pour l'action 1
+END
+					:action_2=><<-END,
+Texte pour l'action 2
+END
 					:abuse=><<-END,
 Désolé votre comportement sur LaPrimaire.org est en violation de la Charte que vous avez acceptée et a entraîné votre exclusion  #{Bot.emoticons[:crying_face]}
 END
@@ -51,8 +57,18 @@ END
 					:text=>messages[:fr][:home][:menu],
 					:callback=>"home/menu",
 					:parse_mode=>"HTML",
-					:kbd=>[],
+					:kbd=>["home/my_action_1","home/my_action_2"],
 					:kbd_options=>{:resize_keyboard=>true,:one_time_keyboard=>false,:selective=>true}
+				},
+				:my_action_1=>{
+					:answer=>"Action 1",
+					:text=>messages[:fr][:home][:action_1],
+					:jump_to=>"home/menu"
+				},
+				:my_action_2=>{
+					:answer=>"Action 2",
+					:text=>messages[:fr][:home][:action_2],
+					:jump_to=>"home/menu"
 				},
 				:abuse=>{
 					:text=>messages[:fr][:home][:abuse],
@@ -73,7 +89,7 @@ END
 
 	def home_menu(msg,user,screen)
 		Bot.log.info "#{__method__}"
-		#screen[:kbd_del]=["home/menu"] #uncomment if you don't want the home button to be displayed on the home menu
+		screen[:kbd_del]=["home/menu"] #comment if you want the home button to be displayed on the home menu
 		@users.next_answer(user[:id],'answer')
 		return self.get_screen(screen,user,msg)
 	end
