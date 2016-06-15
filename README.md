@@ -1,4 +1,4 @@
-# Giskard Bot Engine ![Telegram Chat](https://img.shields.io/badge/telegram-chat-blue.svg)
+# Giskard Bot Engine [![Telegram Chat](https://img.shields.io/badge/telegram-chat-blue.svg)](https://laprimaire.org)
 
 Giskard is a lightweight bot engine to create advanced bots for modern messenging apps, especially keyboard-based bots (see [Why Giskard?](https://github.com/telegraph-ai/giskard#why-giskard)). It natively supports Telegram messenger bots. Facebook messenger and Slack bots support are not yet supported but Giskard has been architected to allow the support of other platforms easily. Giskard is written in ruby (not rails) using the [telegram-bot-ruby](https://github.com/atipugin/telegram-bot-ruby) framework and the [Grape API framework](https://github.com/ruby-grape/grape), it is made to be used in *webhook* mode (vs polling) and serves request through the unicorn web server by default.
 
