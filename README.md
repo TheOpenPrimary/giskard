@@ -281,7 +281,6 @@ To run Giskard in production, you can use :
 ```
 $ bundle exec unicorn -E production -c config/unicorn.conf
 ```
-```
 
 ### Performance notes
 
