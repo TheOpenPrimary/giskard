@@ -169,7 +169,7 @@ module Bot
 				end
 			end
 			res,options=self.dont_understand(user,msg) if res.nil? # if res.nil? then something is fishy
-			@users.save_user_session(user[:id])
+			@users.close_user_session(user[:id])
 			return res,options
 		end
 

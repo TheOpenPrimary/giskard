@@ -120,6 +120,11 @@ module Bot
 			return
 		end
 
+		def close_user_session(user_id)
+			self.save_user_session(user_id)
+			@users.delete(user_id)
+		end
+
 		def already_answered(user_id,update_id)
 			return false if update_id==-1 # external command
 			session=@users[user_id]['session']
