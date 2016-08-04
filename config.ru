@@ -7,9 +7,8 @@ use Rack::Cors do
 	end
 end
 
-Democratech::TelegramBot.client=Telegram::Bot::Client.new(TGTOKEN)
 Bot.log=Bot::Log.new()
 Bot::Navigation.load_addons()
 Bot.nav=Bot::Navigation.new()
 
-run Democratech::TelegramBot
+run Giskard::FBMessengerBot

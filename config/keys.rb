@@ -1,3 +1,8 @@
 WEBHOOK_PREFIX=""
-TGTOKEN=""
 SECRET=""
+
+#### TELEGRAM ####
+TGTOKEN=""
+
+#### FB MESSENGER ####
+FBPAGEACCTOKEN="" # FB Page token
