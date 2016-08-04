@@ -266,9 +266,10 @@ For maximum performance, Giskard does not use the polling mode for the Telegram 
 
 * **Create your bot**. Prior to use Giskard, you need to create your Telegram Bot by following [these instructions](https://core.telegram.org/bots#3-how-do-i-create-a-bot) provided by Telegram.
 * **Create your keys.local.rb**. Copy ```config/keys.rb``` into ```config/keys.local.rb``` and fill-in the 3 constants :
-    - **TGTOKEN** Your bot token as provided by Telegram's BotFather (it looks like: "907662123:HJLyuyHF86xcvw_KJoO5jhgsRKK92adByDC")
+    - **TGTOKEN** Your bot token as provided by Telegram's BotFather (it looks like: "907662123:HJLyuyHF86xcvw_KJoO5jhgsRKK92adByDC"). Required if you are developing a Telegram bot.
     - **WEBHOOK_PREFIX** A random string to hide your webhook endpoint (example: "FDFdfdfEGFDGedqqeq")
     - **SECRET** A secret (random) string for to authenticate custom Giskard API calls. This is not required for Giskard to work.
+    - **FBPAGEACCTOKEN** Your facebook page access token. Required if you are developing a FB Messenger bot.
 * **Setup your webhook development environment**. Developing with webhooks can be tricky because it requires Telegram to be able to send queries to your Giskard instance. If, like 99% developers, you develop on your local PC, Telegram will not be able to send you requests. You should consider using [ngrok](https://ngrok.com/), a true life-saving tool, to easily create secure tunnels to your localhost, thus allowing Telegram to contact your localhost. You should consider purchasing a licence because it is cheap yet super powerful but, for testing purposes, the free version will do : ```ngrok http 8080```
 * **Declare your webhook endpoint to your Telegram bot**. You can use ```curl``` to do it in a straightforward manner :
 ```
