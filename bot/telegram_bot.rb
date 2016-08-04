@@ -18,7 +18,7 @@
 
 require_relative 'navigation.rb'
 
-module Democratech
+module Giskard
 	class TelegramBot < Grape::API
 		prefix WEBHOOK_PREFIX.to_sym
 		format :json
@@ -121,8 +121,8 @@ module Democratech
 				# Having external services called here was a VERY bad idea as exceptions would not be rescued, it would make the worker crash... good job stupid !
 				Bot.log.fatal "#{e.message}\n#{e.backtrace.inspect}\n#{update.inspect}"
 				if e.message.match(/blocked/).nil? and e.message.match(/kicked/).nil? then
-					Democratech::TelegramBot.client.api.sendChatAction(chat_id: update.message.chat.id, action: "typing")
-					Democratech::TelegramBot.client.api.sendMessage({
+					Giskard::TelegramBot.client.api.sendChatAction(chat_id: update.message.chat.id, action: "typing")
+					Giskard::TelegramBot.client.api.sendMessage({
 						:chat_id=>update.message.chat.id,
 						:text=>"Oops... an unexpected error occurred #{Bot.emoticons[:confused]} Please type /start to reinitialize our discussion.",
 						:reply_markup=>Telegram::Bot::Types::ReplyKeyboardHide.new(hide_keyboard: true)
