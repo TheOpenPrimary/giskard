@@ -44,6 +44,7 @@ module Bot
 			# This is for example purpose only and will work with only 1 unicorn process.
 			# If you use more than 1 unicorn process, you should save users in shared memory or a database to ensure data consistency between unicorn processes.
 			@users[user.id]={
+				'user_id'=>user.id,
 				'firstname'=>user.first_name,
 				'lastname'=>user.last_name,
 				'username'=>user.username,
@@ -101,17 +102,22 @@ module Bot
 			})
 		end
 
-		def get(user_info,date)
+		def open_user_session(user_id)
 			res=self.search({
 				:by=>"user_id",
-				:target=>user_info.id
+				:target=>user_id
 			})
 			if res.nil? then # new user
-				Bot.log.debug("Nouveau participant : #{user_info.first_name} #{user_info.last_name} (<https://telegram.me/#{user_info.username}|@#{user_info.username}>)")
+				res = URI.parse("https://graph.facebook.com/v2.6/#{user_id}?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=#{FBPAGEACCTOKEN}").read
+				user_info=JSON.parse(res)
+				user_info["id"]=user_id
+				user_info=JSON.parse(JSON.dump(user_info), object_class: OpenStruct)
+				Bot.log.debug("Nouveau participant : #{user_info.first_name} #{user_info.last_name}")
 				user=self.add(user_info)
 			else
 				user=res
 			end
+			user[:id]=user['user_id']
 			@users[user[:id]]=user
 			return user
 		end

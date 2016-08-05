@@ -26,20 +26,36 @@ module Giskard
 			attr_accessor :client
 		end
 
+		def self.send(payload,type="messages")
+			uri = URI.parse('https://graph.facebook.com')
+			http = Net::HTTP.new(uri.host, uri.port)
+			http.use_ssl = true
+			request = Net::HTTP::Post.new("/v2.6/me/#{type}?access_token=#{FBPAGEACCTOKEN}")
+			request.add_field('Content-Type', 'application/json')
+			request.body = JSON.dump(payload)
+			a=http.request(request)
+		end
+
+		def self.init() # BUG : ca ne semble pas fonctionner
+			payload={
+				"setting_type"=>"greeting",
+				"greeting"=>{ "text"=>"Hello, ca fiouze ?" }
+			}
+			Giskard::FBMessengerBot.send(payload,"thread_settings")
+		end
+
 		helpers do
-			def authorized # Used for API calls (/command below)
+			def authorized # Used for API calls and to verify webhook
 				headers['Secret-Key']==SECRET
 			end
 
-			def send_msg_fb(msg)
-				uri = URI.parse('https://graph.facebook.com')
-				http = Net::HTTP.new(uri.host, uri.port)
-				http.use_ssl = true
-				request = Net::HTTP::Post.new("/v2.6/me/messages?access_token=#{FBPAGEACCTOKEN}")
-				request.add_field('Content-Type', 'application/json')
-				request.body = JSON.dump(msg)
-				a=http.request(request)
-				puts a.inspect
+			def format_answer(user,screen)
+				options={}
+				msg={
+					"recipient"=>{"id"=>user[:id].to_i},
+					"message"=>{"text"=>screen[:text]}
+				}
+				return msg,options
 			end
 		end
 
@@ -53,10 +69,27 @@ module Giskard
 
 		post '/fbmessenger' do
 			messaging_events=params['entry'][0].messaging
-			messaging_events.each do |e|
-				sender=e.sender.id
-				if !e.message.nil? and !e.message.text.nil? then
-					puts "sending msg"
+			messaging_events.each do |update|
+				sender=update.sender.id
+				if !update.message.nil? and !update.message.text.nil? then
+					Bot.log.info "sending msg"
+					object=JSON.parse({"from"=>update.sender.id,"text"=>update.message.text}.to_json, object_class: OpenStruct)
+					user,screen=Bot.nav.get(object,update.message.seq)
+					msg,options=format_answer(user,screen)
+					Giskard::FBMessengerBot.send(msg) unless msg.nil?
+				elsif !update.postback.nil? then
+					Bot.log.info update.postback.payload
+					user,screen=Bot.nav.get(update.postback.payload,update.message.seq)
+					msg,options=format_answer(user,screen)
+					Giskard::FBMessengerBot.send(msg) unless msg.nil?
+				end
+			end
+		end
+	end
+end
+
+### MESSAGES EXAMPLES ###
+
 =begin
 					msg={
 						"recipient"=>{"id"=>sender},
@@ -92,13 +125,10 @@ module Giskard
 							}
 						}
 					}
-=end
-=begin
 					msg={
 						"recipient"=>{"id"=>sender},
 						"message"=>{"text"=>"https://laprimaire.org/candidat/178159928076"}
 					}
-=end
 					msg={
 						"recipient"=>{
 							"id"=>sender
@@ -125,31 +155,4 @@ module Giskard
 							}
 						}
 					}
-					send_msg_fb(msg)
-				elsif !e.postback.nil? then
-					puts e.postback.payload
-					msg={
-						"recipient"=>{"id"=>sender},
-						"message"=>{"text"=>"postback received: "+e.postback.payload}
-					}
-					send_msg_fb(msg)
-				end
-			end
-		end
-
-		post '/command' do
-			error!('401 Unauthorized', 401) unless authorized
-			begin
-				Bot::Db.init()
-				update = Telegram::Bot::Types::Update.new(params)
-				msg,options=Bot.nav.get(update.message,update.update_id)
-				send_msg(update.message.chat.id,msg,options) unless msg.nil?
-			rescue Exception=>e
-				Bot.log.fatal "#{e.message}\n#{e.backtrace.inspect}"
-				error! "Exception raised: #{e.message}", 200 # if you put an error code here, telegram will keep sending you the same msg until you die
-			ensure
-				Bot::Db.close()
-			end
-		end
-	end
-end
+=end

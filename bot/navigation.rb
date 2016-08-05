@@ -94,7 +94,7 @@ module Bot
 
 		def get(msg,update_id)
 			res,options=nil
-			user=@users.get(msg.from,msg.date)
+			user=@users.open_user_session(msg.from)
 			# we check that this message has not already been answered (i.e. telegram sending a msg we already processed)
 			return nil,nil if @users.already_answered(user[:id],update_id) and not DEBUG
 			session=user['session']
@@ -168,9 +168,9 @@ module Bot
 					end
 				end
 			end
-			res,options=self.dont_understand(user,msg) if res.nil? # if res.nil? then something is fishy
+			user,screen=self.dont_understand(user,msg) if res.nil? # if res.nil? then something is fishy
 			@users.close_user_session(user[:id])
-			return res,options
+			return user,screen
 		end
 
 		def dont_understand(user,msg,reset=false)
@@ -184,9 +184,9 @@ module Bot
 				self.method(callback).call(msg,user,screen) if self.respond_to?(callback)
 			else
 				screen=self.find_by_name("system/dont_understand",locale)
-				res,options=self.format_answer(screen,user)
+				user,screen=self.format_answer(screen,user)
 			end
-			return res,options
+			return user,screen
 		end
 
 		def get_screen(screen,user,msg)
@@ -205,11 +205,11 @@ module Bot
 			end
 			@users.update_session(user[:id],session_update)
 			if !callback.nil? && previous!=callback && self.respond_to?(callback)
-				res,options=self.method(callback).call(msg,user,screen.clone)
+				user,screen=self.method(callback).call(msg,user,screen.clone)
 			else
-				res,options=self.format_answer(screen.clone,user)
+				user,screen=self.format_answer(screen.clone,user)
 			end
-			return res,options
+			return user,screen
 		end
 
 		def find_by_name(name,locale='en')
@@ -251,14 +251,13 @@ module Bot
 
 		def format_answer(screen,user)
 			Bot.log.info "#{__method__}: #{screen[:id]}"
-			res=screen[:text] % {
+			screen[:text]=screen[:text] % {
 				firstname: user['firstname'],
 				lastname: user['lastname'],
 				id: user[:id],
 				username: user['username']
 			} unless screen.nil? or screen[:text].nil?
 			locale=self.get_locale(user)
-			options={}
 			kbd=@keyboards[locale][screen[:id]].clone if @keyboards[locale][screen[:id]]
 			if screen[:kbd_del] then
 				screen[:kbd_del].each do |k|
@@ -283,19 +282,9 @@ module Bot
 					newkbd.push(row) if row
 					kbd=newkbd
 				end
-				options[:kbd]=Telegram::Bot::Types::ReplyKeyboardMarkup.new(
-					keyboard:kbd,
-					resize_keyboard:screen[:kbd_options][:resize_keyboard],
-					one_time_keyboard:screen[:kbd_options][:one_time_keyboard],
-					selective:screen[:kbd_options][:selective]
-				)
-
 			end
-			options[:disable_web_page_preview]=true if screen[:disable_web_page_preview]
-			options[:groupsend]=true if screen[:groupsend]
-			options[:parse_mode]=screen[:parse_mode] if screen[:parse_mode]
-			options[:keep_kbd]=true if screen[:keep_kbd]
-			return res,options
+			screen[:kbd]=kbd
+			return user,screen
 		end
 	end
 end

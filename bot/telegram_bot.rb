@@ -31,6 +31,23 @@ module Giskard
 				headers['Secret-Key']==SECRET
 			end
 
+			def format_answer(screen)
+				options={}
+				if (not screen[:kbd].nil?) then
+					options[:kbd]=Telegram::Bot::Types::ReplyKeyboardMarkup.new(
+						keyboard:kbd,
+						resize_keyboard:screen[:kbd_options][:resize_keyboard],
+						one_time_keyboard:screen[:kbd_options][:one_time_keyboard],
+						selective:screen[:kbd_options][:selective]
+					)
+				end
+				options[:disable_web_page_preview]=true if screen[:disable_web_page_preview]
+				options[:groupsend]=true if screen[:groupsend]
+				options[:parse_mode]=screen[:parse_mode] if screen[:parse_mode]
+				options[:keep_kbd]=true if screen[:keep_kbd]
+				return screen,options
+			end
+
 			def send_msg(id,msg,options)
 				if options[:keep_kbd] then
 					options.delete(:keep_kbd)
@@ -97,7 +114,8 @@ module Giskard
 			begin
 				Bot::Db.init()
 				update = Telegram::Bot::Types::Update.new(params)
-				msg,options=Bot.nav.get(update.message,update.update_id)
+				user,screen=Bot.nav.get(update.message,update.update_id)
+				msg,options=format_answer(screen)
 				send_msg(update.message.chat.id,msg,options) unless msg.nil?
 			rescue Exception=>e
 				Bot.log.fatal "#{e.message}\n#{e.backtrace.inspect}"
@@ -115,7 +133,8 @@ module Giskard
 					Bot.log.error "Message from group chat not supported:\n#{update.inspect}"
 					error! "Msg from group chat not supported: #{update.inspect}", 200 # if you put an error code here, telegram will keep sending you the same msg until you die
 				end
-				msg,options=Bot.nav.get(update.message,update.update_id)
+				user,screen=Bot.nav.get(update.message,update.update_id)
+				msg,options=format_answer(screen)
 				send_msg(update.message.chat.id,msg,options) unless msg.nil?
 			rescue Exception=>e
 				# Having external services called here was a VERY bad idea as exceptions would not be rescued, it would make the worker crash... good job stupid !

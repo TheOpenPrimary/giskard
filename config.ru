@@ -10,5 +10,6 @@ end
 Bot.log=Bot::Log.new()
 Bot::Navigation.load_addons()
 Bot.nav=Bot::Navigation.new()
+Giskard::FBMessengerBot.init()
 
 run Giskard::FBMessengerBot
