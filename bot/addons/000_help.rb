@@ -29,7 +29,7 @@ END
 					:first_help=><<-END,
 Sorry I did not understand what you told me #{Bot.emoticons[:crying_face]}
 Please use the keyboard to communicate with me
-image:static/images/keyboard-button.png
+image:https://s3.eu-central-1.amazonaws.com/laprimaire/images/keyboard-button.png
 Click on the "Ok understood" button of the keyboard below to continue.
 END
 				}
@@ -43,7 +43,7 @@ END
 					:first_help=><<-END,
 Désolé, je ne comprends pas ce que vous m'écrivez #{Bot.emoticons[:crying_face]}
 Merci d'utiliser le clavier pour communiquer avec moi
-image:static/images/keyboard-button.png
+image:https://s3.eu-central-1.amazonaws.com/laprimaire/images/keyboard-button.png
 Cliquez sur le bouton "Ok bien compris" du clavier ci-dessous pour continuer.
 END
 				}

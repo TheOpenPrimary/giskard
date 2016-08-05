@@ -117,7 +117,8 @@ module Bot
 				# we expect the user to have used the proposed keyboard to answer
 				screen=self.find_by_answer(msg.text,self.context(session['current']),locale)
 				if not screen.nil? then
-					res,options=get_screen(screen,user,msg)
+					user,screen=get_screen(screen,user,msg)
+					answer=screen[:text].nil? ? "":screen[:text]
 					user['session']=@users.get_session(user[:id])
 					current=user['session']['current']
 					screen=self.find_by_name(current,locale) if screen[:id]!=current and !current.nil?
@@ -126,14 +127,15 @@ module Bot
 						next_screen=find_by_name(jump_to,locale)
 						a,b=get_screen(next_screen,user,msg)
 						user['session']=@users.get_session(user[:id])
-						res="" unless res
-						res+=a unless a.nil?
-						options.merge!(b) unless b.nil?
+						answer+=b[:text] unless b[:text].nil?
+						screen.merge!(b) unless b.nil?
+						screen[:text]=answer unless answer.nil?
 						jump_to=next_screen[:jump_to]
 					end
 				else
 					if not user['settings']['actions']['first_help_given'] and not IGNORE_CONTEXT.include?(self.context(user['session']['current'])) then
 						screen=self.find_by_name("help/first_help",locale)
+						user,screen=self.format_answer(screen,user)
 					else
 						res,options=self.dont_understand(user,msg)
 					end
@@ -150,15 +152,16 @@ module Bot
 						session_update['callback']=nil if input_size==0
 						session=@users.update_session(user[:id],session_update)
 						user['session']=session
-						res,options=self.method(callback).call(msg,user,screen) if input_size==0
-						screen=self.find_by_name(session['current'],locale) if session['current']
+						user,screen=self.method(callback).call(msg,user,screen) if input_size==0
+						answer=screen[:text].nil? ? "":screen[:text]
 						jump_to=screen[:jump_to]
 						while !jump_to.nil? do
 							next_screen=find_by_name(jump_to,locale)
 							user['session']=@users.get_session(user[:id])
-							a,b=get_screen(next_screen,user,msg)
-							res+=a unless a.nil?
-							options.merge!(b) unless b.nil?
+							a,b=get_screen(next_screen,user,msg) #a=user b=screen
+							answer+=b[:text] unless b[:text].nil?
+							screen.merge!(b) unless b.nil?
+							screen[:text]=answer unless answer.nil?
 							user['session']=@users.get_session(user[:id])
 							current=user['session']['current']
 							next_screen=self.find_by_name(current,locale) if next_screen[:id]!=current and !current.nil?
@@ -168,7 +171,7 @@ module Bot
 					end
 				end
 			end
-			user,screen=self.dont_understand(user,msg) if res.nil? # if res.nil? then something is fishy
+			user,screen=self.dont_understand(user,msg) if screen[:text].nil? # if res.nil? then something is fishy
 			@users.close_user_session(user[:id])
 			return user,screen
 		end
@@ -179,7 +182,7 @@ module Bot
 			locale=self.get_locale(user)
 			if not user['settings']['actions']['first_help_given'] then
 				screen=self.find_by_name("help/first_help",locale)
-				res,options=self.format_answer(screen,user)
+				user,screen=self.format_answer(screen,user)
 				callback=self.to_callback(screen[:callback].to_s)
 				self.method(callback).call(msg,user,screen) if self.respond_to?(callback)
 			else
@@ -266,23 +269,6 @@ module Bot
 				end
 			end
 			screen[:kbd_add].each { |k| kbd.unshift(k) } if screen[:kbd_add]
-			if not kbd.nil? then
-				if kbd.length>1 and not screen[:kbd_vertical] then
-					# display keyboard on several rows
-					newkbd=[]
-					row=[]
-					kbd.each_with_index do |r,i|
-						idx=i+1
-						row.push(r)
-						if (idx%2)==0 then
-							newkbd.push(row)
-							row=[]
-						end
-					end
-					newkbd.push(row) if row
-					kbd=newkbd
-				end
-			end
 			screen[:kbd]=kbd
 			return user,screen
 		end

@@ -128,7 +128,7 @@ module Bot
 
 		def close_user_session(user_id)
 			self.save_user_session(user_id)
-			@users.delete(user_id)
+			# @users.delete(user_id) # To be uncommented once a persistant storage is in place
 		end
 
 		def already_answered(user_id,update_id)

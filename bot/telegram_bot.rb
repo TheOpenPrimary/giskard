@@ -34,6 +34,21 @@ module Giskard
 			def format_answer(screen)
 				options={}
 				if (not screen[:kbd].nil?) then
+					if kbd.length>1 and not screen[:kbd_vertical] then
+						# display keyboard on several rows
+						newkbd=[]
+						row=[]
+						kbd.each_with_index do |r,i|
+							idx=i+1
+							row.push(r)
+							if (idx%2)==0 then
+								newkbd.push(row)
+								row=[]
+							end
+						end
+						newkbd.push(row) if not row.empty?
+						kbd=newkbd
+					end
 					options[:kbd]=Telegram::Bot::Types::ReplyKeyboardMarkup.new(
 						keyboard:kbd,
 						resize_keyboard:screen[:kbd_options][:resize_keyboard],

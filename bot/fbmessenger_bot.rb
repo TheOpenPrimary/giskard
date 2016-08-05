@@ -26,21 +26,17 @@ module Giskard
 			attr_accessor :client
 		end
 
-		def self.send(payload,type="messages")
-			uri = URI.parse('https://graph.facebook.com')
-			http = Net::HTTP.new(uri.host, uri.port)
-			http.use_ssl = true
-			request = Net::HTTP::Post.new("/v2.6/me/#{type}?access_token=#{FBPAGEACCTOKEN}")
-			request.add_field('Content-Type', 'application/json')
-			request.body = JSON.dump(payload)
-			a=http.request(request)
+		def self.send(payload,type="messages",file_url=nil)
+			if file_url.nil? then
+				RestClient.post "https://graph.facebook.com/v2.6/me/#{type}?access_token=#{FBPAGEACCTOKEN}", payload.to_json, :content_type => :json
+			else # image upload # FIXME file upload does not work : 400 Bad Request
+				params={"recipient"=>payload['recipient'], "message"=>payload['message'], "filedata"=>File.new(file_url,'rb'),"multipart"=>true}
+				RestClient.post "https://graph.facebook.com/v2.6/me/#{type}?access_token=#{FBPAGEACCTOKEN}",params
+			end
 		end
 
-		def self.init() # BUG : ca ne semble pas fonctionner
-			payload={
-				"setting_type"=>"greeting",
-				"greeting"=>{ "text"=>"Hello, ca fiouze ?" }
-			}
+		def self.init() # FIXME : Apparently it works but I did not find how to reset a fb messenger conversation so I could not see it working
+			payload={ "setting_type"=>"greeting", "greeting"=>{ "text"=>"Hello, ca fiouze ?" }}
 			Giskard::FBMessengerBot.send(payload,"thread_settings")
 		end
 
@@ -49,13 +45,70 @@ module Giskard
 				headers['Secret-Key']==SECRET
 			end
 
-			def format_answer(user,screen)
-				options={}
-				msg={
-					"recipient"=>{"id"=>user[:id].to_i},
-					"message"=>{"text"=>screen[:text]}
-				}
-				return msg,options
+			def send_msg(id,text,kbd=nil)
+				msg={"recipient"=>{"id"=>id},"message"=>{"text"=>text}}
+				if not kbd.nil? then
+					msg["message"]["quick_replies"]=[]
+					kbd.each do |k|
+						msg["message"]["quick_replies"].push({
+							"content_type"=>"text",
+							"title"=>k,
+							"payload"=>k
+						})
+					end
+				end
+				Giskard::FBMessengerBot.send(msg)
+			end
+
+			def send_typing(id)
+				Giskard::FBMessengerBot.send({"recipient"=>{"id"=>id},"sender_action"=>"typing_on"})
+			end
+
+			def send_image(id,img_url)
+				payload={"recipient"=>{"id"=>id},"message"=>{"attachment"=>{"type"=>"image","payload"=>{}}}}
+				if not img_url.match(/http/).nil? then
+					payload["message"]["attachment"]["payload"]={"url"=>img_url}
+					Giskard::FBMessengerBot.send(payload)
+				else
+					Giskard::FBMessengerBot.send(payload,"messages",img_url)
+				end
+			end
+
+			def process_msg(id,msg,options)
+				lines=msg.split("\n")
+				buffer=""
+				max=lines.length
+				idx=0
+				image=false
+				kbd=nil
+				lines.each do |l|
+					next if l.empty?
+					idx+=1
+					image=(l.start_with?("image:") && (['.jpg','.png','.gif','.jpeg'].include? File.extname(l)))
+					if image && !buffer.empty? then # flush buffer before sending image
+						writing_time=buffer.length/TYPINGSPEED
+						send_typing(id)
+						sleep(writing_time)
+						send_msg(id,buffer)
+						buffer=""
+					end
+					if image then # sending image
+						send_typing(id)
+						send_image(id,l.split(":",2)[1])
+					else # sending 1 msg for every line
+						writing_time=l.length/TYPINGSPEED
+						writing_time=l.length/TYPINGSPEED_SLOW if max>1
+						send_typing(id)
+						sleep(writing_time)
+						if l.start_with?("no_preview:") then
+							l=l.split(':',2)[1]
+						end
+						if (idx==max)
+							kbd=options[:kbd]
+						end
+						send_msg(id,l,kbd)
+					end
+				end
 			end
 		end
 
@@ -72,87 +125,18 @@ module Giskard
 			messaging_events.each do |update|
 				sender=update.sender.id
 				if !update.message.nil? and !update.message.text.nil? then
-					Bot.log.info "sending msg"
+					Bot.log.info update.message.text
 					object=JSON.parse({"from"=>update.sender.id,"text"=>update.message.text}.to_json, object_class: OpenStruct)
 					user,screen=Bot.nav.get(object,update.message.seq)
-					msg,options=format_answer(user,screen)
-					Giskard::FBMessengerBot.send(msg) unless msg.nil?
+					process_msg(user[:id],screen[:text],screen) unless screen[:text].nil?
 				elsif !update.postback.nil? then
 					Bot.log.info update.postback.payload
-					user,screen=Bot.nav.get(update.postback.payload,update.message.seq)
-					msg,options=format_answer(user,screen)
-					Giskard::FBMessengerBot.send(msg) unless msg.nil?
+					object=JSON.parse({"from"=>update.sender.id,"text"=>update.postback.payload}.to_json, object_class: OpenStruct)
+					user,screen=Bot.nav.get(object,update.message.seq)
+					process_msg(user[:id],screen[:text],screen) unless screen[:text].nil?
 				end
 			end
 		end
 	end
 end
 
-### MESSAGES EXAMPLES ###
-
-=begin
-					msg={
-						"recipient"=>{"id"=>sender},
-						"message"=> {
-							"attachment"=> {
-								"type"=> "template",
-								"payload"=> {
-									"template_type"=> "generic",
-									"elements"=> [{
-										"title"=> "First card",
-										"subtitle"=> "Element #1 of an hscroll",
-										"image_url"=> "http://messengerdemo.parseapp.com/img/rift.png",
-										"buttons"=> [{
-											"type"=> "web_url",
-											"url"=> "https://www.messenger.com/",
-											"title"=> "Web url"
-										}, {
-											"type"=> "postback",
-											"title"=> "Postback",
-											"payload"=> "Payload for first element in a generic bubble",
-										}],
-									},{
-											"title"=> "Second card",
-											"subtitle"=> "Element #2 of an hscroll",
-											"image_url"=> "http://messengerdemo.parseapp.com/img/gearvr.png",
-											"buttons"=> [{
-												"type"=> "postback",
-												"title"=> "Postback",
-												"payload"=> "Payload for second element in a generic bubble",
-											}],
-										}]
-								}
-							}
-						}
-					}
-					msg={
-						"recipient"=>{"id"=>sender},
-						"message"=>{"text"=>"https://laprimaire.org/candidat/178159928076"}
-					}
-					msg={
-						"recipient"=>{
-							"id"=>sender
-						},
-						"message"=>{
-							"attachment"=>{
-								"type"=>"template",
-								"payload"=>{
-									"template_type"=>"button",
-									"text"=>"What do you want to do next?",
-									"buttons"=>[
-										{
-											"type"=>"web_url",
-											"url"=>"https://petersapparel.parseapp.com",
-											"title"=>"Show Website"
-										},
-										{
-											"type"=>"postback",
-											"title"=>"Start Chatting",
-											"payload"=>"USER_DEFINED_PAYLOAD"
-										}
-									]
-								}
-							}
-						}
-					}
-=end
