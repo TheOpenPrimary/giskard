@@ -287,7 +287,7 @@ For maximum performance, Giskard does not use the polling mode for the Telegram 
 * **Setup your webhook development environment**. Developing with webhooks can be tricky because it requires Telegram to be able to send queries to your Giskard instance. If, like 99% developers, you develop on your local PC, Telegram will not be able to send you requests. You should consider using [ngrok](https://ngrok.com/), a true life-saving tool, to easily create secure tunnels to your localhost, thus allowing Telegram and/or Facebook to contact your localhost. You should consider purchasing a licence because it is cheap yet super powerful but, for testing purposes, the free version will do : ```ngrok http 8080```
 * **Declare your webhook endpoint to your bot**. For a FB Messenger bot, you need to register it from your App's webhook settings page. For a telegram bot, you can use ```curl``` to do it in a straightforward manner :
 ```
-curl -s -X POST https://api.telegram.org/bot<TGTOKEN>/setWebhook?url=<yoursubdomain>.ngrok.io/<WEBHOOK_PREFIX>
+curl -s -X POST https://api.telegram.org/bot<TGTOKEN>/setWebhook?url=<yoursubdomain>.ngrok.io/<TG_WEBHOOK_PREFIX>
 ```
 
 ### Installing Giskard

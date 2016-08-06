@@ -21,13 +21,3 @@ if FBMESSENGER then
 end	
 
 run Rack::Cascade.new bots
-=begin
-case BOT_TYPE
-when "TELEGRAM" then
-	Giskard::TelegramBot.client=Telegram::Bot::Client.new(TGTOKEN)
-	run Giskard::TelegramBot
-when "FBMESSENGER" then
-	Giskard::FBMessengerBot.init()
-	run Giskard::FBMessengerBot
-end
-=end
