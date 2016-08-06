@@ -6,13 +6,13 @@ IGNORE_CONTEXT=["api","help"]
 SUPPORTED_LOCALES=["fr","en"]
 
 #### TELEGRAM ####
-TELEGRAM=1
+TELEGRAM=1 # Set to 0 and ignore the TG_* variables if you don't want to serve your bot on the Telegram platform
 TG_WEBHOOK_PREFIX=""
 TG_SECRET=""
 TG_TOKEN=""
 
 #### FB MESSENGER ####
-FBMESSENGER=1
+FBMESSENGER=1 # Set to 0 and ignore the FB_* variables if you don't want to serve your bot on the Facebook Messenger platform
 FB_WEBHOOK_PREFIX=""
 FB_SECRET=""
 FB_PAGEACCTOKEN="" # FB Page token
