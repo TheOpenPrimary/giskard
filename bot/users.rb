@@ -43,14 +43,15 @@ module Bot
 			## WARNING ## 
 			# This is for example purpose only and will work with only 1 unicorn process.
 			# If you use more than 1 unicorn process, you should save users in shared memory or a database to ensure data consistency between unicorn processes.
-			@users[user.id]={
-				'firstname'=>user.first_name,
-				'lastname'=>user.last_name,
-				'username'=>user.username,
+			@users[user['id']]={
+				'user_id'=>user['id'],
+				'firstname'=>user['first_name'],
+				'lastname'=>user['last_name'],
+				'username'=>user['username'],
 				'session'=>bot_session,
 				'settings'=>user_settings
 			}
-			return @users[user.id] 
+			return @users[user['id']] 
 		end
 
 		def reset(user)
@@ -101,17 +102,28 @@ module Bot
 			})
 		end
 
-		def get(user_info,date)
+		def open_user_session(user_info,bot)
 			res=self.search({
 				:by=>"user_id",
-				:target=>user_info.id
+				:target=>user_info['id']
 			})
 			if res.nil? then # new user
-				Bot.log.debug("Nouveau participant : #{user_info.first_name} #{user_info.last_name} (<https://telegram.me/#{user_info.username}|@#{user_info.username}>)")
-				user=self.add(user_info)
+				case bot
+				when TG_BOT_NAME then
+					Bot.log.debug("Nouveau participant : #{user_info['first_name']} #{user_info['last_name']} (<https://telegram.me/#{user_info['username']}|@#{user_info['username']}>)")
+					user=self.add(user_info)
+				when FB_BOT_NAME then
+					res = URI.parse("https://graph.facebook.com/v2.6/#{user_info['id']}?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=#{FB_PAGEACCTOKEN}").read
+					user=JSON.parse(res)
+					user['id']=user_info['id']
+					user=JSON.parse(JSON.dump(user), object_class: OpenStruct)
+					Bot.log.debug("Nouveau participant : #{user_info['first_name']} #{user_info['last_name']}")
+				end
+				user=self.add(user)
 			else
 				user=res
 			end
+			user[:id]=user['user_id']
 			@users[user[:id]]=user
 			return user
 		end
@@ -122,7 +134,7 @@ module Bot
 
 		def close_user_session(user_id)
 			self.save_user_session(user_id)
-			@users.delete(user_id)
+			# @users.delete(user_id) # To be uncommented once a persistant storage is in place
 		end
 
 		def already_answered(user_id,update_id)

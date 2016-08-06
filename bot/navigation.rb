@@ -92,9 +92,19 @@ module Bot
 			return SUPPORTED_LOCALES.include?(user['settings']['locale']) ? user['settings']['locale'] : 'en'
 		end
 
-		def get(msg,update_id)
+		def get(msg,update_id,bot)
 			res,options=nil
-			user=@users.get(msg.from,msg.date)
+			user_info={}
+			case bot
+			when TG_BOT_NAME then
+				user_info["id"]=msg.from.id
+				user_info["username"]=msg.from.username
+				user_info["last_name"]=msg.from.last_name
+				user_info["first_name"]=msg.from.first_name
+			when FB_BOT_NAME then
+				user_info["id"]=msg.from
+			end
+			user=@users.open_user_session(user_info,bot)
 			# we check that this message has not already been answered (i.e. telegram sending a msg we already processed)
 			return nil,nil if @users.already_answered(user[:id],update_id) and not DEBUG
 			session=user['session']
@@ -117,7 +127,8 @@ module Bot
 				# we expect the user to have used the proposed keyboard to answer
 				screen=self.find_by_answer(msg.text,self.context(session['current']),locale)
 				if not screen.nil? then
-					res,options=get_screen(screen,user,msg)
+					user,screen=get_screen(screen,user,msg)
+					answer=screen[:text].nil? ? "":screen[:text]
 					user['session']=@users.get_session(user[:id])
 					current=user['session']['current']
 					screen=self.find_by_name(current,locale) if screen[:id]!=current and !current.nil?
@@ -126,14 +137,15 @@ module Bot
 						next_screen=find_by_name(jump_to,locale)
 						a,b=get_screen(next_screen,user,msg)
 						user['session']=@users.get_session(user[:id])
-						res="" unless res
-						res+=a unless a.nil?
-						options.merge!(b) unless b.nil?
+						answer+=b[:text] unless b[:text].nil?
+						screen.merge!(b) unless b.nil?
+						screen[:text]=answer unless answer.nil?
 						jump_to=next_screen[:jump_to]
 					end
 				else
 					if not user['settings']['actions']['first_help_given'] and not IGNORE_CONTEXT.include?(self.context(user['session']['current'])) then
 						screen=self.find_by_name("help/first_help",locale)
+						user,screen=self.format_answer(screen,user)
 					else
 						res,options=self.dont_understand(user,msg)
 					end
@@ -150,15 +162,16 @@ module Bot
 						session_update['callback']=nil if input_size==0
 						session=@users.update_session(user[:id],session_update)
 						user['session']=session
-						res,options=self.method(callback).call(msg,user,screen) if input_size==0
-						screen=self.find_by_name(session['current'],locale) if session['current']
+						user,screen=self.method(callback).call(msg,user,screen) if input_size==0
+						answer=screen[:text].nil? ? "":screen[:text]
 						jump_to=screen[:jump_to]
 						while !jump_to.nil? do
 							next_screen=find_by_name(jump_to,locale)
 							user['session']=@users.get_session(user[:id])
-							a,b=get_screen(next_screen,user,msg)
-							res+=a unless a.nil?
-							options.merge!(b) unless b.nil?
+							a,b=get_screen(next_screen,user,msg) #a=user b=screen
+							answer+=b[:text] unless b[:text].nil?
+							screen.merge!(b) unless b.nil?
+							screen[:text]=answer unless answer.nil?
 							user['session']=@users.get_session(user[:id])
 							current=user['session']['current']
 							next_screen=self.find_by_name(current,locale) if next_screen[:id]!=current and !current.nil?
@@ -168,9 +181,9 @@ module Bot
 					end
 				end
 			end
-			res,options=self.dont_understand(user,msg) if res.nil? # if res.nil? then something is fishy
+			user,screen=self.dont_understand(user,msg) if screen[:text].nil? # if res.nil? then something is fishy
 			@users.close_user_session(user[:id])
-			return res,options
+			return user,screen
 		end
 
 		def dont_understand(user,msg,reset=false)
@@ -179,14 +192,14 @@ module Bot
 			locale=self.get_locale(user)
 			if not user['settings']['actions']['first_help_given'] then
 				screen=self.find_by_name("help/first_help",locale)
-				res,options=self.format_answer(screen,user)
+				user,screen=self.format_answer(screen,user)
 				callback=self.to_callback(screen[:callback].to_s)
 				self.method(callback).call(msg,user,screen) if self.respond_to?(callback)
 			else
 				screen=self.find_by_name("system/dont_understand",locale)
-				res,options=self.format_answer(screen,user)
+				user,screen=self.format_answer(screen,user)
 			end
-			return res,options
+			return user,screen
 		end
 
 		def get_screen(screen,user,msg)
@@ -205,11 +218,11 @@ module Bot
 			end
 			@users.update_session(user[:id],session_update)
 			if !callback.nil? && previous!=callback && self.respond_to?(callback)
-				res,options=self.method(callback).call(msg,user,screen.clone)
+				user,screen=self.method(callback).call(msg,user,screen.clone)
 			else
-				res,options=self.format_answer(screen.clone,user)
+				user,screen=self.format_answer(screen.clone,user)
 			end
-			return res,options
+			return user,screen
 		end
 
 		def find_by_name(name,locale='en')
@@ -251,14 +264,13 @@ module Bot
 
 		def format_answer(screen,user)
 			Bot.log.info "#{__method__}: #{screen[:id]}"
-			res=screen[:text] % {
+			screen[:text]=screen[:text] % {
 				firstname: user['firstname'],
 				lastname: user['lastname'],
 				id: user[:id],
 				username: user['username']
 			} unless screen.nil? or screen[:text].nil?
 			locale=self.get_locale(user)
-			options={}
 			kbd=@keyboards[locale][screen[:id]].clone if @keyboards[locale][screen[:id]]
 			if screen[:kbd_del] then
 				screen[:kbd_del].each do |k|
@@ -267,35 +279,8 @@ module Bot
 				end
 			end
 			screen[:kbd_add].each { |k| kbd.unshift(k) } if screen[:kbd_add]
-			if not kbd.nil? then
-				if kbd.length>1 and not screen[:kbd_vertical] then
-					# display keyboard on several rows
-					newkbd=[]
-					row=[]
-					kbd.each_with_index do |r,i|
-						idx=i+1
-						row.push(r)
-						if (idx%2)==0 then
-							newkbd.push(row)
-							row=[]
-						end
-					end
-					newkbd.push(row) if row
-					kbd=newkbd
-				end
-				options[:kbd]=Telegram::Bot::Types::ReplyKeyboardMarkup.new(
-					keyboard:kbd,
-					resize_keyboard:screen[:kbd_options][:resize_keyboard],
-					one_time_keyboard:screen[:kbd_options][:one_time_keyboard],
-					selective:screen[:kbd_options][:selective]
-				)
-
-			end
-			options[:disable_web_page_preview]=true if screen[:disable_web_page_preview]
-			options[:groupsend]=true if screen[:groupsend]
-			options[:parse_mode]=screen[:parse_mode] if screen[:parse_mode]
-			options[:keep_kbd]=true if screen[:keep_kbd]
-			return res,options
+			screen[:kbd]=kbd
+			return user,screen
 		end
 	end
 end
