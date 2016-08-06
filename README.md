@@ -26,7 +26,14 @@ Giskard is a lightweight bot engine to create advanced bots for modern messengin
 
 ## What is Giskard?
 
-Giskard enables you to easily create complex Telegram bots (Facebook messenger bots support coming soon). Giskard has been created to leverage [Telegram Bot API](https://core.telegram.org/bots/api) and, in particular, the possibility to interact with the user through custom keyboard actions. Giskard is a bot engine that enables you to easily create complex and customized user experience. To this date, Giskard does not implement any sort of AI (otherwise Giskard would have been named [R. Daneel Olivaw](https://en.wikipedia.org/wiki/R._Daneel_Olivaw)) although it could be "easily" added. Giskard enables you to easily implement flexible [Finite-state machine](https://en.wikipedia.org/wiki/Finite-state_machine) for your bot.
+Giskard enables you to easily create complex Telegram bots (Facebook messenger bots support coming soon). Giskard has been created to leverage [Telegram Bot API](https://core.telegram.org/bots/api) and, in particular, the possibility to interact with the user through custom keyboard actions. Giskard is a bot engine that enables you to easily create complex and customized user experience. Giskard does not implement AI support natively (otherwise Giskard would have been named [R. Daneel Olivaw](https://en.wikipedia.org/wiki/R._Daneel_Olivaw)) but AI support can easily be added into the business logic of your bot by leveraging the [Wit.ai API](https://wit.ai/docs) for example. Giskard enables you to easily implement platform agnostic flexible [Finite-state machine](https://en.wikipedia.org/wiki/Finite-state_machine) for your bot.
+
+Here is a dummy example (actually this is what you'll get if you run this code without modifications) of a telegram bot and a messenger bot run by Giskard. Note that these 2 bots are being served by Giskard within 1 single server instance, by the same process.
+
+Telegram Bot | FB Messenger Bot
+------------ | ----------------
+![Telegram Bot](https://s3.eu-central-1.amazonaws.com/laprimaire/screenshots/telegram_v1_bot.png) | ![FB Messenger Bot](https://s3.eu-central-1.amazonaws.com/laprimaire/screenshots/fbmessenger_bot.png)
+
 
 ## Why Giskard?
 
@@ -35,8 +42,7 @@ Giskard has been developed for several reasons, among which :
 * **Keyboard-based bots > AI-based bots**. While most people today relate bots to some kind of AI, it is still very complicated to create complex bots using pure free text interaction, especially when you are not a machine learning or deep learning expert. To address this issue, today's messenging platforms (especially [Telegram](https://telegram.org) and now Facebook messenger) now provide extremely powerful bot APIs that allow bots to interact with users through customized buttons and/or keyboards. Using buttons and customized keyboards makes it particularly straightforward for users to interact with the bot has they have a limited, pre-defined choice of answers. For developers, using customized buttons and/or keyboards is also a great news because it removes the need to develop a powerful AI engine to achieve basic functionalities. It does not means that AI should not be used of course but at least it is not a requirement anymore.
 * **Implementing complex finite-state machines is not easy**. If an AI engine is now optional, it does not make developing a complex bot a lot easier. Indeed, as a developer, you now need to implement finite-state machine like behavior for your bot to interact with the user. If this is easy to do when your bot has very few states, it can become quite messy if your bot starts being more complex.
 
-
-This is why we developped Giskard. Giskard aims at making it easy to develop complex keyboard-based bots. Giskard has been developed for a real world project with real users (50.000 as this is written). Giskard has been developed to provide [LaPrimaire.org](https://laprimaire.org) with a [telegram bot](https://www.youtube.com/watch?v=AUoArIkCECo) to enable french citizens to crowdsource their election candidates for the 2017 french presidential elections. Due to the nature of the project, it was clear to us that Giskard had to be open-source.
+This is why we developped Giskard. Giskard aims at making it easy to develop complex keyboard-based bots. Giskard has been developed for a real world project with real users (60.000 as this is written). Giskard has been developed to provide [LaPrimaire.org](https://laprimaire.org) with a [telegram bot](https://www.youtube.com/watch?v=AUoArIkCECo) to enable french citizens to crowdsource their election candidates for the 2017 french presidential elections. Due to the nature of the project, it was clear to us that Giskard had to be open-source.
 
 Last but not least, Giskard is AI compatible. If you want AI in your bot to be able to answer to "unspecified" actions, you can still do it by integrating with the understanding module of [Wit.ai](https://wit.ai) which is accessible through their API.
 
@@ -315,7 +321,7 @@ Giskard has been architected to use as little memory as possible. To give you an
 
 ### Telegram support
 
-Giskard now supports Telegram API v1.* and the its feature coverage of the Telegram API is not yet 100%. Support for Telegram API v2.* should be pretty straightforward, we just need to take the time to do it :)
+Giskard now supports Telegram API v1.* and the its feature coverage of the Telegram API is not yet 100% (inline bots are not supported yet for example). Support for [Telegram API v2.*](https://core.telegram.org/bots/2-0-intro) should be pretty straightforward, we just need to take the time to do it :)
 
 ### FB Messenger support
 
