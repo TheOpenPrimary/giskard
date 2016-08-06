@@ -102,18 +102,18 @@ module Bot
 			})
 		end
 
-		def open_user_session(user_info)
+		def open_user_session(user_info,bot)
 			res=self.search({
 				:by=>"user_id",
 				:target=>user_info['id']
 			})
 			if res.nil? then # new user
-				case BOT_TYPE
-				when "TELEGRAM" then
+				case bot
+				when TG_BOT_NAME then
 					Bot.log.debug("Nouveau participant : #{user_info['first_name']} #{user_info['last_name']} (<https://telegram.me/#{user_info['username']}|@#{user_info['username']}>)")
 					user=self.add(user_info)
-				when "FBMESSENGER" then
-					res = URI.parse("https://graph.facebook.com/v2.6/#{user_info['id']}?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=#{FBPAGEACCTOKEN}").read
+				when FB_BOT_NAME then
+					res = URI.parse("https://graph.facebook.com/v2.6/#{user_info['id']}?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=#{FB_PAGEACCTOKEN}").read
 					user=JSON.parse(res)
 					user['id']=user_info['id']
 					user=JSON.parse(JSON.dump(user), object_class: OpenStruct)

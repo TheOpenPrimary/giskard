@@ -4,7 +4,7 @@
 
 ![Giskard logo](https://s3.eu-central-1.amazonaws.com/laprimaire/giskard_logo_400x285.jpg "Giskard")
 
-Giskard is a lightweight bot engine to create advanced bots for modern messenging apps, especially keyboard-based bots (see [Why Giskard?](https://github.com/telegraph-ai/giskard#why-giskard)). It natively supports Telegram messenger bots. Facebook messenger and Slack bots support are not yet supported but Giskard has been architected to allow the support of other platforms easily. Giskard is written in ruby (not rails) using the [telegram-bot-ruby](https://github.com/atipugin/telegram-bot-ruby) framework and the [Grape API framework](https://github.com/ruby-grape/grape), it is made to be used in *webhook* mode (vs polling) and serves request through the unicorn web server by default.
+Giskard is a lightweight bot engine to create advanced bots for modern messenging apps, especially keyboard-based bots (see [Why Giskard?](https://github.com/telegraph-ai/giskard#why-giskard)). It natively supports Telegram messenger and FB messenger bots (actually you can even run a Telegram bot and an FB messenger bot in parallel with the same shared business logic). Slack bots support are not yet supported but Giskard has been architected to allow the support of other platforms easily. Giskard is written in ruby (not rails) using the [telegram-bot-ruby](https://github.com/atipugin/telegram-bot-ruby) framework and the [Grape API framework](https://github.com/ruby-grape/grape), it is made to be used in *webhook* mode (vs polling) and serves request through the unicorn web server by default.
 
 # Table of content
 
@@ -20,6 +20,9 @@ Giskard is a lightweight bot engine to create advanced bots for modern messengin
    - [Installing Giskard](https://github.com/telegraph-ai/giskard#installing-giskard)
    - [Running Giskard](https://github.com/telegraph-ai/giskard#running-giskard)
    - [Performance notes](https://github.com/telegraph-ai/giskard#performance-notes)
+- [Compatibility notes](https://github.com/telegraph-ai/giskard#compatibility-notes)
+   - [Telegram support](https://github.com/telegraph-ai/giskard#telegram-support)
+   - [FBMessenger support](https://github.com/telegraph-ai/giskard#fbmessenger-support)
 
 ## What is Giskard?
 
@@ -32,7 +35,10 @@ Giskard has been developed for several reasons, among which :
 * **Keyboard-based bots > AI-based bots**. While most people today relate bots to some kind of AI, it is still very complicated to create complex bots using pure free text interaction, especially when you are not a machine learning or deep learning expert. To address this issue, today's messenging platforms (especially [Telegram](https://telegram.org) and now Facebook messenger) now provide extremely powerful bot APIs that allow bots to interact with users through customized buttons and/or keyboards. Using buttons and customized keyboards makes it particularly straightforward for users to interact with the bot has they have a limited, pre-defined choice of answers. For developers, using customized buttons and/or keyboards is also a great news because it removes the need to develop a powerful AI engine to achieve basic functionalities. It does not means that AI should not be used of course but at least it is not a requirement anymore.
 * **Implementing complex finite-state machines is not easy**. If an AI engine is now optional, it does not make developing a complex bot a lot easier. Indeed, as a developer, you now need to implement finite-state machine like behavior for your bot to interact with the user. If this is easy to do when your bot has very few states, it can become quite messy if your bot starts being more complex.
 
+
 This is why we developped Giskard. Giskard aims at making it easy to develop complex keyboard-based bots. Giskard has been developed for a real world project with real users (50.000 as this is written). Giskard has been developed to provide [LaPrimaire.org](https://laprimaire.org) with a [telegram bot](https://www.youtube.com/watch?v=AUoArIkCECo) to enable french citizens to crowdsource their election candidates for the 2017 french presidential elections. Due to the nature of the project, it was clear to us that Giskard had to be open-source.
+
+Last but not least, Giskard is AI compatible. If you want AI in your bot to be able to answer to "unspecified" actions, you can still do it by integrating with the understanding module of [Wit.ai](https://wit.ai) which is accessible through their API.
 
 The name *Giskard* comes from [R. Giskard Reventlov](http://asimov.wikia.com/wiki/R._Giskard_Reventlov) from the Asimov Robot series. In Asimov's novels, Giskard is not supposed to be a very advanced robot (like R. Daneel Olivaw) but a very strong a reliable one. However, throughout the story, Giskard will prove to be a robot more advanced than expected... I stop here to avoid any spoiler :)
 
@@ -210,7 +216,7 @@ As you can see, the messages are localized. The supported locales are to be defi
 
 ### images
 
-If a message starts with ```image:<relative_image_url>``` (example: ```image:static/images/keyboard-button.png```), Giskard will send the image to the user and the image will render in the user chat.
+If a message starts with ```image:<relative_image_url>``` (example: ```image:static/images/keyboard-button.png```), Giskard will send the image to the user and the image will render in the user chat. Remote image URL is also supported (example: ```image:https://myserver.com/images/keyboard-button.png```)
 
 #### url previews
 
@@ -303,4 +309,16 @@ Giskard has been developed with performance in mind. Ruby haters will say it is 
 * as bots try to mimic normal users behavior, they do not send their answer as fast as possible as it would not look natural. This means that a request can take up to several seconds to be completed. Not because there are heavy computations behind but because Giskard purposedly "sleeps" between messages to emulate a normal user behavior. Note that Giskard can be configured to never sleep in case you want Giskard to answer as fast as possible.
 * to handle large loads, you will need to spawn a lot of Giskard instances (in the form of unicorn processes) to be able to handle parallel requests. This is why minimizing memory usage of a Giskard process was very important.
 
-Giskard has been architected to use as little memory as possible. To give you an example, in our complex Giskard bot (using ruby gems for mandrill, postgresql, algolia, aws, google cs etc..) every Giskard instance uses less than 1MB of memory.
+Giskard has been architected to use as little memory as possible. To give you an example, in our complex Giskard bot (using ruby gems for mandrill, postgresql, algolia, aws, google cs etc..) every Giskard instance uses less than 1MB of memory. Plus Giskard can serve both Telegram AND FB Messenger bots from 1 single instance which is quite helpful performance wise if you happen to run your bot on different platforms.
+
+## Compatibility notes
+
+### Telegram support
+
+Giskard now supports Telegram API v1.* and the its feature coverage of the Telegram API is not yet 100%. Support for Telegram API v2.* should be pretty straightforward, we just need to take the time to do it :)
+
+### FB Messenger support
+
+FB Messenger support is still pretty early so it does not cover the full spectrum of the FB Messenger API but, in case you need FB Messenger API features that are not yet covered by Giskard, just ask (or even better : send us your PR), adding support for more API features in Giskard is really easy to do.
+
+It is also important to note that, at this stage, Giskard does not implement [message_echoes, message_deliveries or message_reads](https://developers.facebook.com/docs/messenger-platform/webhook-reference) subscriptions so make sure to disable them in the settings of your webhook unless you want your bot to be spammed with requests it does not know how to handle (yet).

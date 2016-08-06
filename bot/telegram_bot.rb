@@ -20,7 +20,7 @@ require_relative 'navigation.rb'
 
 module Giskard
 	class TelegramBot < Grape::API
-		prefix WEBHOOK_PREFIX.to_sym
+		prefix TG_WEBHOOK_PREFIX.to_sym
 		format :json
 		class << self
 			attr_accessor :client
@@ -28,7 +28,7 @@ module Giskard
 
 		helpers do
 			def authorized
-				headers['Secret-Key']==SECRET
+				headers['Secret-Key']==TG_SECRET
 			end
 
 			def format_answer(screen)
@@ -139,7 +139,7 @@ module Giskard
 			begin
 				Bot::Db.init()
 				update = Telegram::Bot::Types::Update.new(params)
-				user,screen=Bot.nav.get(update.message,update.update_id)
+				user,screen=Bot.nav.get(update.message,update.update_id,TG_BOT_NAME)
 				msg,options=format_answer(screen)
 				send_msg(update.message.chat.id,msg,options) unless msg.nil?
 			rescue Exception=>e
@@ -158,7 +158,7 @@ module Giskard
 					Bot.log.error "Message from group chat not supported:\n#{update.inspect}"
 					error! "Msg from group chat not supported: #{update.inspect}", 200 # if you put an error code here, telegram will keep sending you the same msg until you die
 				end
-				user,screen=Bot.nav.get(update.message,update.update_id)
+				user,screen=Bot.nav.get(update.message,update.update_id,TG_BOT_NAME)
 				msg,options=format_answer(screen)
 				send_msg(update.message.chat.id,msg,options) unless msg.nil?
 			rescue Exception=>e

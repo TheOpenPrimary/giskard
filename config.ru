@@ -10,6 +10,18 @@ end
 Bot.log=Bot::Log.new()
 Bot::Navigation.load_addons()
 Bot.nav=Bot::Navigation.new()
+bots=[]
+if TELEGRAM then
+	Giskard::TelegramBot.client=Telegram::Bot::Client.new(TG_TOKEN)
+	bots.push(Giskard::TelegramBot)
+end
+if FBMESSENGER then
+	Giskard::FBMessengerBot.init()
+	bots.push(Giskard::FBMessengerBot)
+end	
+
+run Rack::Cascade.new bots
+=begin
 case BOT_TYPE
 when "TELEGRAM" then
 	Giskard::TelegramBot.client=Telegram::Bot::Client.new(TGTOKEN)
@@ -18,4 +30,4 @@ when "FBMESSENGER" then
 	Giskard::FBMessengerBot.init()
 	run Giskard::FBMessengerBot
 end
-
+=end

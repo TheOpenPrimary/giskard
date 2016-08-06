@@ -92,19 +92,19 @@ module Bot
 			return SUPPORTED_LOCALES.include?(user['settings']['locale']) ? user['settings']['locale'] : 'en'
 		end
 
-		def get(msg,update_id)
+		def get(msg,update_id,bot)
 			res,options=nil
 			user_info={}
-			case BOT_TYPE
-			when "TELEGRAM" then
+			case bot
+			when TG_BOT_NAME then
 				user_info["id"]=msg.from.id
 				user_info["username"]=msg.from.username
 				user_info["last_name"]=msg.from.last_name
 				user_info["first_name"]=msg.from.first_name
-			when "FBMESSENGER" then
+			when FB_BOT_NAME then
 				user_info["id"]=msg.from
 			end
-			user=@users.open_user_session(user_info)
+			user=@users.open_user_session(user_info,bot)
 			# we check that this message has not already been answered (i.e. telegram sending a msg we already processed)
 			return nil,nil if @users.already_answered(user[:id],update_id) and not DEBUG
 			session=user['session']

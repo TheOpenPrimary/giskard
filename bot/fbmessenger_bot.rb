@@ -20,15 +20,15 @@ require_relative 'navigation.rb'
 
 module Giskard
 	class FBMessengerBot < Grape::API
-		prefix WEBHOOK_PREFIX.to_sym
+		prefix FB_WEBHOOK_PREFIX.to_sym
 		format :json
 
 		def self.send(payload,type="messages",file_url=nil)
 			if file_url.nil? then
-				RestClient.post "https://graph.facebook.com/v2.6/me/#{type}?access_token=#{FBPAGEACCTOKEN}", payload.to_json, :content_type => :json
+				RestClient.post "https://graph.facebook.com/v2.6/me/#{type}?access_token=#{FB_PAGEACCTOKEN}", payload.to_json, :content_type => :json
 			else # image upload # FIXME file upload does not work : 400 Bad Request
 				params={"recipient"=>payload['recipient'], "message"=>payload['message'], "filedata"=>File.new(file_url,'rb'),"multipart"=>true}
-				RestClient.post "https://graph.facebook.com/v2.6/me/#{type}?access_token=#{FBPAGEACCTOKEN}",params
+				RestClient.post "https://graph.facebook.com/v2.6/me/#{type}?access_token=#{FB_PAGEACCTOKEN}",params
 			end
 		end
 
@@ -39,7 +39,7 @@ module Giskard
 
 		helpers do
 			def authorized # Used for API calls and to verify webhook
-				headers['Secret-Key']==SECRET
+				headers['Secret-Key']==FB_SECRET
 			end
 
 			def send_msg(id,text,kbd=nil)
@@ -110,7 +110,7 @@ module Giskard
 		end
 
 		get '/fbmessenger' do
-			if params['hub.verify_token']==SECRET then
+			if params['hub.verify_token']==FB_SECRET then
 				return params['hub.challenge'].to_i
 			else
 				return "nope"
@@ -124,12 +124,12 @@ module Giskard
 				if !update.message.nil? and !update.message.text.nil? then
 					Bot.log.info update.message.text
 					object=JSON.parse({"from"=>update.sender.id,"text"=>update.message.text}.to_json, object_class: OpenStruct)
-					user,screen=Bot.nav.get(object,update.message.seq)
+					user,screen=Bot.nav.get(object,update.message.seq,FB_BOT_NAME)
 					process_msg(user[:id],screen[:text],screen) unless screen[:text].nil?
 				elsif !update.postback.nil? then
 					Bot.log.info update.postback.payload
 					object=JSON.parse({"from"=>update.sender.id,"text"=>update.postback.payload}.to_json, object_class: OpenStruct)
-					user,screen=Bot.nav.get(object,update.message.seq)
+					user,screen=Bot.nav.get(object,update.message.seq,FB_BOT_NAME)
 					process_msg(user[:id],screen[:text],screen) unless screen[:text].nil?
 				end
 			end

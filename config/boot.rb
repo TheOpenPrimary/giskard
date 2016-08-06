@@ -8,8 +8,8 @@ require 'json'
 require 'time'
 require 'net/http'
 require 'uri'
-require 'telegram/bot' if BOT_TYPE=="TELEGRAM"
-require 'logger'
-require 'ostruct'
 require 'open-uri'
-require 'rest_client'
+require 'telegram/bot' if TELEGRAM
+require 'logger'
+require 'ostruct' if FBMESSENGER
+require 'rest_client' if FBMESSENGER
