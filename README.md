@@ -8,21 +8,21 @@ Giskard is a lightweight bot engine to create advanced bots for modern messengin
 
 # Table of content
 
-- [What is Giskard?](https://github.com/telegraph-ai/giskard#what-is-giskard)
-- [Why Giskard?](https://github.com/telegraph-ai/giskard#why-giskard)
-- [How Giskard works](https://github.com/telegraph-ai/giskard#how-giskard-works)
-   - [Screens](https://github.com/telegraph-ai/giskard#screens)
-   - [Callbacks](https://github.com/telegraph-ai/giskard#callbacks)
-   - [Messages](https://github.com/telegraph-ai/giskard#messages)
-   - [User object](https://github.com/telegraph-ai/giskard#user-object)
-- [Giskard setup](https://github.com/telegraph-ai/giskard#giskard-setup)
-   - [Pre-requirements](https://github.com/telegraph-ai/giskard#pre-requirements)
-   - [Installing Giskard](https://github.com/telegraph-ai/giskard#installing-giskard)
-   - [Running Giskard](https://github.com/telegraph-ai/giskard#running-giskard)
-   - [Performance notes](https://github.com/telegraph-ai/giskard#performance-notes)
-- [Compatibility notes](https://github.com/telegraph-ai/giskard#compatibility-notes)
-   - [Telegram support](https://github.com/telegraph-ai/giskard#telegram-support)
-   - [FBMessenger support](https://github.com/telegraph-ai/giskard#fbmessenger-support)
+- [What is Giskard?](#what-is-giskard)
+- [Why Giskard?](#why-giskard)
+- [How Giskard works](#how-giskard-works)
+   - [Screens](#screens)
+   - [Callbacks](#callbacks)
+   - [Messages](#messages)
+   - [User object](#user-object)
+- [Giskard setup](#giskard-setup)
+   - [Pre-requirements](#pre-requirements)
+   - [Installing Giskard](#installing-giskard)
+   - [Running Giskard](#running-giskard)
+   - [Performance notes](#performance-notes)
+- [Compatibility notes](#compatibility-notes)
+   - [Telegram support](#telegram-support)
+   - [FBMessenger support](#fbmessenger-support)
 
 ## What is Giskard?
 
