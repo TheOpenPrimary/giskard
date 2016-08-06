@@ -22,9 +22,6 @@ module Giskard
 	class FBMessengerBot < Grape::API
 		prefix WEBHOOK_PREFIX.to_sym
 		format :json
-		class << self
-			attr_accessor :client
-		end
 
 		def self.send(payload,type="messages",file_url=nil)
 			if file_url.nil? then

@@ -34,6 +34,7 @@ module Giskard
 			def format_answer(screen)
 				options={}
 				if (not screen[:kbd].nil?) then
+					kbd=screen[:kbd]
 					if kbd.length>1 and not screen[:kbd_vertical] then
 						# display keyboard on several rows
 						newkbd=[]
@@ -69,7 +70,7 @@ module Giskard
 				else
 					kbd = options[:kbd].nil? ? Telegram::Bot::Types::ReplyKeyboardHide.new(hide_keyboard: true) : options[:kbd] 
 				end
-				lines=msg.split("\n")
+				lines=msg[:text].split("\n")
 				buffer=""
 				max=lines.length
 				idx=0
@@ -87,8 +88,17 @@ module Giskard
 						buffer=""
 					end
 					if image then # sending image
+						img_url=l.split(":",2)[1]
+						if not img_url.match(/http/).nil? then
+							img='static/tmp/image'+File.extname(img_url)
+							File.open(img, 'wb') do |fo|
+								  fo.write open(img_url).read 
+							end
+							img_url=img
+						end
+						img=File.new(img_url)
 						TelegramBot.client.api.send_chat_action(chat_id: id, action: "upload_photo")
-						TelegramBot.client.api.send_photo(chat_id: id, photo: File.new(l.split(":")[1]))
+						TelegramBot.client.api.send_photo(chat_id: id, photo: img)
 					elsif options[:groupsend] # grouping lines into 1 single message # buggy
 						buffer+=l
 						if (idx==max) then # flush buffer

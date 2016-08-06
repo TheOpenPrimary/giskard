@@ -10,6 +10,12 @@ end
 Bot.log=Bot::Log.new()
 Bot::Navigation.load_addons()
 Bot.nav=Bot::Navigation.new()
-Giskard::FBMessengerBot.init()
+case BOT_TYPE
+when "TELEGRAM" then
+	Giskard::TelegramBot.client=Telegram::Bot::Client.new(TGTOKEN)
+	run Giskard::TelegramBot
+when "FBMESSENGER" then
+	Giskard::FBMessengerBot.init()
+	run Giskard::FBMessengerBot
+end
 
-run Giskard::FBMessengerBot

@@ -94,7 +94,17 @@ module Bot
 
 		def get(msg,update_id)
 			res,options=nil
-			user=@users.open_user_session(msg.from)
+			user_info={}
+			case BOT_TYPE
+			when "TELEGRAM" then
+				user_info["id"]=msg.from.id
+				user_info["username"]=msg.from.username
+				user_info["last_name"]=msg.from.last_name
+				user_info["first_name"]=msg.from.first_name
+			when "FBMESSENGER" then
+				user_info["id"]=msg.from
+			end
+			user=@users.open_user_session(user_info)
 			# we check that this message has not already been answered (i.e. telegram sending a msg we already processed)
 			return nil,nil if @users.already_answered(user[:id],update_id) and not DEBUG
 			session=user['session']

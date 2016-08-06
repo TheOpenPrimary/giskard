@@ -8,7 +8,7 @@ require 'json'
 require 'time'
 require 'net/http'
 require 'uri'
-require 'telegram/bot'
+require 'telegram/bot' if BOT_TYPE=="TELEGRAM"
 require 'logger'
 require 'ostruct'
 require 'open-uri'
