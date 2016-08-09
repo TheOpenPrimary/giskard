@@ -77,7 +77,7 @@ module Giskard
 				max=lines.length
 				idx=0
 				image=false
-				kbd=nil
+				kbd=nil 
 				lines.each do |l|
 					next if l.empty?
 					idx+=1
@@ -109,6 +109,7 @@ module Giskard
 			end
 		end
 
+    # challenge for creating a webhook
 		get '/fbmessenger' do
 			if params['hub.verify_token']==FB_SECRET then
 				return params['hub.challenge'].to_i
@@ -124,30 +125,27 @@ module Giskard
         entry.messaging.each do |messaging|
           id_sender = messaging.sender.id
           id_receiv = messaging.recipient.id
-          id        = messaging.message.mid unless messaging.message.nil?
-          text      = messaging.message.text unless messaging.message.nil? 
+          id        = messaging.message.nil? ? messaging.message.mid : nil # FIXME case of postback
+          seq       = messaging.message.nil? ? messaging.message.seq : nil # FIXME case of postback
           timestamp = messaging.time
-          msg     = Giskard::Message.new(id_sender, id, text, timestamp)
+          if not messaging.message.nil? then
+            text      = messaging.message.nil?
+          elsif not postback.nil? then
+            text      = postback.payload
+          end
+          
           if not text.nil? then
-            
+            # read message
+            msg     = Giskard::Message.new(id_sender, id, postback, timestamp)
+  					screen  = Bot.nav.get(msg)
+            # send answer
+  					process_msg(user.id,screen[:text],screen) unless screen[:text].nil?
+          end
         end
-      end
-                         
-			messaging_events.each do |update|
-				sender=update.sender.id
-				if !update.message.nil? and !update.message.text.nil? then
-					Bot.log.info update.message.text
-					object=JSON.parse({"from"=>update.sender.id,"text"=>update.message.text}.to_json, object_class: OpenStruct)
-					user,screen=Bot.nav.get(object,update.message.seq,FB_BOT_NAME)
-					process_msg(user[:id],screen[:text],screen) unless screen[:text].nil?
-				elsif !update.postback.nil? then
-					Bot.log.info update.postback.payload
-					object=JSON.parse({"from"=>update.sender.id,"text"=>update.postback.payload}.to_json, object_class: OpenStruct)
-					user,screen=Bot.nav.get(object,update.message.seq,FB_BOT_NAME)
-					process_msg(user[:id],screen[:text],screen) unless screen[:text].nil?
-				end
-			end
+      end   
 		end
+    
+    
 	end
 end
 

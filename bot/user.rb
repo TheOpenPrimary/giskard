@@ -26,19 +26,23 @@ module Giskard
     attr_accessor :first_name          
     attr_accessor :last_name         
     attr_accessor :username          
-    attr_accessor :session
     attr_accessor :settings
+    attr_accessor :bot_upgrade
     
     # FSM
-    attr_accessor :callback
-    attr_accessor :expected_size   # when typing a text
-    attr_accessor :expected_input  # "answered" when keyboard, "free_text" when text
-    attr_accessor :current         # current state
-		attr_accessor :buffer
+    attr_accessor :state
+#    attr_accessor :callback
+ #   attr_accessor :expected_size   # when typing a text
+ #   attr_accessor :expected_input  # "answered" when keyboard, "free_text" when text
+#    attr_accessor :current         # current state
+#		attr_accessor :buffer
+ #   attr_reader   :last_update_id
+    attr_reader   :previous_state
+    attr_reader   :previous_screen
 
 		def initialize()
       self.initialize_fsm()
-			user_settings={
+			@settings={
 				'blocked'=>{ 'abuse'=>false }, # the user has clearly done bad things 
 				'actions'=>{ 'first_help_given'=>false },
 				'locale'=>'fr'
@@ -54,76 +58,46 @@ module Giskard
     # fsm
     # -----------------------------------
     def initialize_fsm()
-			@last_update_id=>nil,
-			@current=>nil,
-			@expected_input=>"answer",
-			@expected_size=>-1,
-			@buffer=>""
+			@state['last_update_id']  = nil
+			@state['current']         = nil
+			@state['expected_input']  = "answer"
+			@state['expected_size']   = -1
+			@state['buffer']          = ""
+      @previous_state = @state.clone
     end
     
 		def next_answer(type,size=-1,callback=nil,buffer="")
-			@buffer               = buffer,
-		  @expected_input       = type,
-		  @expected_input_size  = size,
-			@callback             = callback
+			@state['buffer']          = buffer
+		  @state['expected_input']  = type
+		  @state['expected__size']  = size
+			@state['callback']        = callback
 		end
-		def already_answered(user_id,update_id)
-			return false if update_id==-1 # external command
-			session=@users[user_id]['session']
-			return true if not session['last_update_id'].nil? and session['last_update_id'].to_i>update_id.to_i
-			self.update_session(user_id,{'last_update_id'=>update_id.to_i})
+    
+		def already_answered(msg)
+			return false if msg.id ==-1 # external command
+			return true if not @last_update_id.nil? and @last_update_id.to_i>msg.to_i # FIXME what is to_i ?
+			@last_update_id = update_id.to_i
 			return false
 		end
 
-		def search(query)
-			return @users[query[:target]]
-		end
-
-		def previous_state(user_id)
-			user=@users[user_id]
-			screen=user['session']['previous_screen']
+		def previous_state()
+			screen=@session['previous_screen']
 			return nil if screen.nil?
 			screen=Hash[screen.map{|(k,v)| [k.to_sym,v]}] # pas recursif
 			screen[:kbd_options]=Hash[screen[:kbd_options].map{|(k,v)| [k.to_sym,v]}] unless screen[:kbd_options].nil?
-			@users[user_id]['session']=user['session']['previous_session'].clone unless user['session']['previous_session'].nil?
+			@state = @previous_state.clone unless @previous_state.nil?
 			return screen
 		end
     
     # ___________________________________
     # loading - saving
     # -----------------------------------
-		def open_user_session(user_info,bot)
-			res=self.search({
-				:by=>"user_id",
-				:target=>user_info['id']
-			})
-			if res.nil? then # new user
-				case bot
-				when TG_BOT_NAME then
-					Bot.log.debug("Nouveau participant : #{user_info['first_name']} #{user_info['last_name']} (<https://telegram.me/#{user_info['username']}|@#{user_info['username']}>)")
-					user=self.add(user_info)
-				when FB_BOT_NAME then
-					res = URI.parse("https://graph.facebook.com/v2.6/#{user_info['id']}?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=#{FB_PAGEACCTOKEN}").read
-					user=JSON.parse(res)
-					user['id']=user_info['id']
-					user=JSON.parse(JSON.dump(user), object_class: OpenStruct)
-					Bot.log.debug("Nouveau participant : #{user_info['first_name']} #{user_info['last_name']}")
-				end
-				user=self.add(user)
-			else
-				user=res
-			end
-			user[:id]=user['user_id']
-			@users[user[:id]]=user
-			return user
-		end
-
-		def save_user_session()
+		def save()
 			return
 		end
 
-		def close_user_session()
-			self.save_user_session(user_id)
+		def close()
+			self.save()
 			# @users.delete(user_id) # To be uncommented once a persistant storage is in place
 		end
 

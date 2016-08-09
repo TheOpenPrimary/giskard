@@ -16,9 +16,10 @@
    limitations under the License.
 =end
 
-module Bot
+module Giskard
   class Message
-    attr_accessor :id                # id of the message
+    attr_accessor :id                # unique id of the message 
+    attr_accessor :seq               # id of the message in the conversation
     attr_accessor :text              # content of the message
     attr_accessor :timestamp         # when was the message sent?
     attr_accessor :id_user           # id of the sender
