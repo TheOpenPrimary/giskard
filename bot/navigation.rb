@@ -92,100 +92,115 @@ module Bot
 			return SUPPORTED_LOCALES.include?(user['settings']['locale']) ? user['settings']['locale'] : 'en'
 		end
 
-		def get(msg,update_id,bot)
-			res,options=nil
-			user_info={}
-			case bot
-			when TG_BOT_NAME then
-				user_info["id"]=msg.from.id
-				user_info["username"]=msg.from.username
-				user_info["last_name"]=msg.from.last_name
-				user_info["first_name"]=msg.from.first_name
-			when FB_BOT_NAME then
-				user_info["id"]=msg.from
-			end
-			user=@users.open_user_session(user_info,bot)
-			# we check that this message has not already been answered (i.e. telegram sending a msg we already processed)
-			return nil,nil if @users.already_answered(user[:id],update_id) and not DEBUG
-			session=user['session']
-			if user['bot_upgrade'].to_i==1 and not update_id==-1 then
-				Bot.log.warn "Bot upgrade detected" 
-				update_id=-1
-				msg.text='api/bot_upgrade'
-			end
-			if update_id==-1 then
-				# msg comes from api and not from telegram
-				api_cb,api_payload=msg.text.split("\n",2).each {|x| x.strip!}
-				raise "no callback given" if api_cb.nil?
-				@users.next_answer(user[:id],'free_text',1,api_cb)
-				session=@users.update_session(user[:id],{'api_payload'=>api_payload}) if !api_payload.nil?
-			end
-			input=session['expected_input']
-			locale=self.get_locale(user)
-			session['current']="home/welcome" if RESET_WORDS.include?(msg.text)
-			if (input=='answer' or RESET_WORDS.include?(msg.text)) then
-				# we expect the user to have used the proposed keyboard to answer
-				screen=self.find_by_answer(msg.text,self.context(session['current']),locale)
-				if not screen.nil? then
-					user,screen=get_screen(screen,user,msg)
-					answer=screen[:text].nil? ? "":screen[:text]
-					user['session']=@users.get_session(user[:id])
-					current=user['session']['current']
-					screen=self.find_by_name(current,locale) if screen[:id]!=current and !current.nil?
-					jump_to=screen[:jump_to]
-					while !jump_to.nil? do
-						next_screen=find_by_name(jump_to,locale)
-						a,b=get_screen(next_screen,user,msg)
-						user['session']=@users.get_session(user[:id])
-						answer+=b[:text] unless b[:text].nil?
-						screen.merge!(b) unless b.nil?
-						screen[:text]=answer unless answer.nil?
-						jump_to=next_screen[:jump_to]
-					end
-				else
-					if not user['settings']['actions']['first_help_given'] and not IGNORE_CONTEXT.include?(self.context(user['session']['current'])) then
-						screen=self.find_by_name("help/first_help",locale)
-						user,screen=self.format_answer(screen,user)
-					else
-						res,options=self.dont_understand(user,msg)
-					end
-				end
-			else # we expect the user to have answered by typing text manually
-				callback=self.to_callback(session['callback'].to_s)
-			        if input=='free_text' and self.respond_to?(callback) then
-					if session['expected_input_size']>0 then
-						input_size=session['expected_input_size']-1
-						buffer= msg.text.nil? ? session['buffer'] : session['buffer']+msg.text
-						session=@users.update_session(user[:id],{'buffer'=>buffer})
-						screen=self.find_by_name(session['callback'],locale)
-						session_update={'expected_input_size'=>input_size}
-						session_update['callback']=nil if input_size==0
-						session=@users.update_session(user[:id],session_update)
-						user['session']=session
-						user,screen=self.method(callback).call(msg,user,screen) if input_size==0
-						answer=screen[:text].nil? ? "":screen[:text]
-						jump_to=screen[:jump_to]
-						while !jump_to.nil? do
-							next_screen=find_by_name(jump_to,locale)
-							user['session']=@users.get_session(user[:id])
-							a,b=get_screen(next_screen,user,msg) #a=user b=screen
-							answer+=b[:text] unless b[:text].nil?
-							screen.merge!(b) unless b.nil?
-							screen[:text]=answer unless answer.nil?
-							user['session']=@users.get_session(user[:id])
-							current=user['session']['current']
-							next_screen=self.find_by_name(current,locale) if next_screen[:id]!=current and !current.nil?
-							jump_to=next_screen[:jump_to]
-						end
+    # Gets a message and goes to next step if understood 
+    # Call by an interface when a message is received
+    # @msg is class Message. It is expected to give at least a user's id and a text
+		def get(msg)
+      if msg.user.nil?
+        msg.user = @users.open_user_session(msg.id_user)
+      end
+      _user    = msg.user 
+      
+			# we check that this message has not already been answered (i.e. bot sending a msg we already processed)
+			return nil,nil if _user.already_answered(msg) and not DEBUG
+      
+      ## What is bot_upgrade ??
+			# session=user['session']
+#       if user['bot_upgrade'].to_i==1 and not update_id==-1 then
+#         Bot.log.warn "Bot upgrade detected"
+#         update_id=-1
+#         msg.text='api/bot_upgrade'
+#       end
+#       if update_id==-1 then
+#         # msg comes from api and not from telegram
+#         api_cb,api_payload=msg.text.split("\n",2).each {|x| x.strip!}
+#         raise "no callback given" if api_cb.nil?
+#         @users.next_answer(user[:id],'free_text',1,api_cb)
+#         session=@users.update_session(user[:id],{'api _payload'=>api_payload}) if !api_payload.nil?
+#       end
+      
+      # reset
+      _reset               = self.is_reset(msg.text)
+      if _reset? then
+			  user.current  = "home/welcome"
+        return ## TODO
+      end
 
-					end
-				end
-			end
-			user,screen=self.dont_understand(user,msg) if screen[:text].nil? # if res.nil? then something is fishy
-			@users.close_user_session(user[:id])
-			return user,screen
+			_input               = user.expected_input
+
+			# we expect the user to have used the proposed keyboard to answer    
+			if _input == 'answer' then
+				_screen = get_button_answer(msg, user)
+  			return _screen
+      # we expect the user to have answered by typing text manually
+      elsif _input=='free_text' and self.respond_to?(_callback) and _session['expected_input_size']>0 then
+						screen = get_text_answer(msg, user)
+      			return _screen
+        end
+        
+      # we didn't expect this message
+			_user, _screen = self.dont_understand(_user,msg)
+			return _user, _screen
+      # WHY?? @users.close_user_session(user[:id])
+
 		end
 
+    def is_reset(text)
+        return RESET_WORDS.include?(msg.text) ? true : false
+    end
+    
+    def get_button_answer(msg,user)
+      _callback          = self.to_callback(user.callback.to_s)
+			_locale            = self.get_locale(_user)
+			_screen            = self.find_by_answer(msg.text,self.context(user.current),_locale)
+			if not screen.nil? then
+				_user,_screen     = get_screen(_screen,_user,msg)
+				_answer           = _screen[:text].nil? ? "" : _screen[:text]
+				_user['session']  = @users.get_session(_user[:id])
+				_current          = _user['session']['current']
+				_screen           = self.find_by_name(_current,_locale) if _screen[:id]!= _current and !_current.nil?
+				_jump_to          = _screen[:jump_to]
+				while !jump_to.nil? do
+					_next_screen       = find_by_name(_jump_to,_locale)
+					_a,_b              = get_screen(next_screen,user,msg)
+					_user['session']   = @users.get_session(_user[:id])
+					_answer           += _b[:text] unless _b[:text].nil?
+					_screen.merge!(b) unless _b.nil?
+					_screen[:text]     = _answer unless _answer.nil?
+					_jump_to           = _next_screen[:jump_to]
+				end
+			else
+				if not _user['settings']['actions']['first_help_given'] and not IGNORE_CONTEXT.include?(self.context(_user['session']['current'])) then
+					_screen            = self.find_by_name("help/first_help",_locale)
+					_user,_screen      = self.format_answer(_screen, _user)
+				else
+					_res, _options     = self.dont_understand(_user, _msg)
+				end
+			end
+    end  
+    
+    def get_text_answer(msg, user)
+      _callback                 = self.to_callback(user.callback.to_s)
+			_locale                   = self.get_locale(_user)
+      user.expected_input_size -= 1
+			user.buffer               = user.buffer + msg.text unless msg.text.nil?
+			_screen                   = self.find_by_name(user.callback, _locale)
+			user.callback             = nil if _input_size==0
+			_user,_screen             = self.method(_callback).call(_msg,_user,_screen) if _input_size==0
+			_answer                   = _screen[:text].nil? ? "":screen[:text]
+			_jump_to                  = _screen[:jump_to]
+			while !_jump_to.nil? do
+				_next_screen              = self.find_by_name(_jump_to,_locale)
+				_a,_b                     = self.get_screen(_next_screen,user,msg) #a=user b=screen
+				_answer                  += b[:text] unless _b[:text].nil?
+				_screen.merge!(b) unless _b.nil?
+				_screen[:text]            = _answer unless _answer.nil?
+				_current                  = user.current
+				_next_screen              = self.find_by_name(_current, _locale) if _next_screen[:id]!= _current and !_current.nil?
+				_jump_to                  = _next_screen[:jump_to]
+			end
+    end
+    
 		def dont_understand(user,msg,reset=false)
 			# dedicated method to not affect user session
 			Bot.log.info "#{__method__} #{msg}"

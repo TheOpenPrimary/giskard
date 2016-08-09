@@ -152,15 +152,27 @@ module Giskard
 
 		post '/' do
 			begin
-				Bot::Db.init()
+				Bot::Db.init() ## FIXME not good for perf to start the db each time
 				update = Telegram::Bot::Types::Update.new(params)
 				if update.message.chat.type=="group" then
 					Bot.log.error "Message from group chat not supported:\n#{update.inspect}"
 					error! "Msg from group chat not supported: #{update.inspect}", 200 # if you put an error code here, telegram will keep sending you the same msg until you die
 				end
-				user,screen=Bot.nav.get(update.message,update.update_id,TG_BOT_NAME)
-				msg,options=format_answer(screen)
-				send_msg(update.message.chat.id,msg,options) unless msg.nil?
+        msg = update.message
+        
+        # user
+        user            = @users.open_user_session(msg.from.id)
+        user.username   = msg.from.username
+        user.last_name  = msg.from.last_name
+        user.first_name = msg.from.first_name
+        msg.user        = user
+        
+        # handle new message
+				user,screen=Bot.nav.get(msg)
+        
+        # send answer
+				answer,options  = format_answer(screen)
+				send_msg(msg.chat.id,answer,options) unless answer.nil?
 			rescue Exception=>e
 				# Having external services called here was a VERY bad idea as exceptions would not be rescued, it would make the worker crash... good job stupid !
 				Bot.log.fatal "#{e.message}\n#{e.backtrace.inspect}\n#{update.inspect}"

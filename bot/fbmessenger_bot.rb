@@ -32,7 +32,7 @@ module Giskard
 			end
 		end
 
-		def self.init() # FIXME : Apparently it works but I did not find how to reset a fb messenger conversation so I could not see it working
+		def self.init() 
 			payload={ "setting_type"=>"greeting", "greeting"=>{ "text"=>"Hello, ca fiouze ?" }}
 			Giskard::FBMessengerBot.send(payload,"thread_settings")
 		end
@@ -117,8 +117,22 @@ module Giskard
 			end
 		end
 
+    # we receive a new message
 		post '/fbmessenger' do
-			messaging_events=params['entry'][0].messaging
+			entries     = params['entry']
+      entries.each do |entry|
+        entry.messaging.each do |messaging|
+          id_sender = messaging.sender.id
+          id_receiv = messaging.recipient.id
+          id        = messaging.message.mid unless messaging.message.nil?
+          text      = messaging.message.text unless messaging.message.nil? 
+          timestamp = messaging.time
+          msg     = Giskard::Message.new(id_sender, id, text, timestamp)
+          if not text.nil? then
+            
+        end
+      end
+                         
 			messaging_events.each do |update|
 				sender=update.sender.id
 				if !update.message.nil? and !update.message.text.nil? then

@@ -16,7 +16,10 @@
    limitations under the License.
 =end
 
-module Bot
+# define a class for managing several users
+
+
+module Giskard
 	class Users
 		def self.load_queries
 			queries={}
