@@ -139,7 +139,15 @@ module Giskard
 			begin
 				Bot::Db.init()
 				update = Telegram::Bot::Types::Update.new(params)
-				user,screen=Bot.nav.get(update.message,update.update_id,TG_BOT_NAME)
+        text            = update.message.text
+        id              = update.message.chat.id
+        id_receiv       = update.message.from.id
+        user            = Bot::User.new(id_receiv, TG_BOT_NAME)
+        user.username   = update.message.from.username
+        user.last_name  = update.message.from.last_name
+        user.first_name = update.message.from.first_name
+        msg             = Giskard::Message.new(id, text, user, 0, TG_BOT_NAME)
+				user,screen=Bot.nav.get(msg, user)
 				msg,options=format_answer(screen)
 				send_msg(update.message.chat.id,msg,options) unless msg.nil?
 			rescue Exception=>e
@@ -152,22 +160,36 @@ module Giskard
 
 		post '/' do
 			begin
-				Bot::Db.init()
-				update = Telegram::Bot::Types::Update.new(params)
+				Bot::Db.init() ## FIXME not good for perf to start the db each time
+				update          = Telegram::Bot::Types::Update.new(params)
 				if update.message.chat.type=="group" then
 					Bot.log.error "Message from group chat not supported:\n#{update.inspect}"
 					error! "Msg from group chat not supported: #{update.inspect}", 200 # if you put an error code here, telegram will keep sending you the same msg until you die
 				end
-				user,screen=Bot.nav.get(update.message,update.update_id,TG_BOT_NAME)
-				msg,options=format_answer(screen)
-				send_msg(update.message.chat.id,msg,options) unless msg.nil?
+        text            = update.message.text
+        id              = update.message.chat.id
+        id_receiv       = update.message.from.id
+        user            = Bot::User.new()
+        user.id         = id
+        user.bot        = TG_BOT_NAME
+        user.username   = update.message.from.username
+        user.last_name  = update.message.from.last_name
+        user.first_name = update.message.from.first_name
+        msg             = Giskard::Message.new(id, text, id, TG_BOT_NAME)
+        
+        # handle new message
+				screen     = Bot.nav.get(msg, user)
+        
+        # send answer
+				answer,options  = format_answer(screen)
+				send_msg(id,answer,options) unless answer.nil?
 			rescue Exception=>e
 				# Having external services called here was a VERY bad idea as exceptions would not be rescued, it would make the worker crash... good job stupid !
 				Bot.log.fatal "#{e.message}\n#{e.backtrace.inspect}\n#{update.inspect}"
 				if e.message.match(/blocked/).nil? and e.message.match(/kicked/).nil? then
-					Giskard::TelegramBot.client.api.sendChatAction(chat_id: update.message.chat.id, action: "typing")
+					Giskard::TelegramBot.client.api.sendChatAction(chat_id: id, action: "typing")
 					Giskard::TelegramBot.client.api.sendMessage({
-						:chat_id=>update.message.chat.id,
+						:chat_id=>id,
 						:text=>"Oops... an unexpected error occurred #{Bot.emoticons[:confused]} Please type /start to reinitialize our discussion.",
 						:reply_markup=>Telegram::Bot::Types::ReplyKeyboardHide.new(hide_keyboard: true)
 					})
