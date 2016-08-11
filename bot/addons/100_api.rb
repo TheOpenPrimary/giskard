@@ -112,57 +112,55 @@ END
 
 	def api_access_granted(msg,user,screen)
 		Bot.log.info "#{__method__}"
-		@users.remove_from_waiting_list(user)
-		@users.next_answer(user[:id],'answer')
-		Bot.log.event(user[:id],'api_grant_beta_access')
+		#@users.remove_from_waiting_list(user)
+		user.next_answer('answer')
+		Bot.log.event(user.id,'api_grant_beta_access')
 		return self.get_screen(screen,user,msg)
 	end
 
 	def api_allow_user(msg,user,screen)
 		Bot.log.info "#{__method__}"
-		@users.update_settings(user[:id],{'blocked'=>{'not_allowed'=>false }})
-		@users.next_answer(user[:id],'answer')
-		Bot.log.event(user[:id],'api_reallow_user')
+		user.settings['blocked']['not_allowed'] = false
+		user.next_answer('answer')
+		Bot.log.event(user.id,'api_reallow_user')
 		return self.get_screen(screen,user,msg)
 	end
 
 	def api_ban_user(msg,user,screen)
 		Bot.log.info "#{__method__}"
-		@users.update_settings(user[:id],{'blocked'=>{'abuse'=>true }})
-		@users.next_answer(user[:id],'answer')
-		Bot.log.event(user[:id],'api_ban_user')
+		user.settings['blocked']['abuse'] = true
+		user.next_answer('answer')
+		Bot.log.event(user.id,'api_ban_user')
 		return self.get_screen(screen,user,msg)
 	end
 
 	def api_reset_user(msg,user,screen)
 		Bot.log.info "#{__method__}"
-		@users.reset(user)
-		@users.next_answer(user[:id],'answer')
-		Bot.log.event(user[:id],'api_reset_user')
+		user.reset(user)
+		user.next_answer('answer')
+		Bot.log.event(user.id,'api_reset_user')
 		return self.get_screen(screen,user,msg)
 	end
 
 	def api_unblock_user(msg,user,screen)
 		Bot.log.info "#{__method__}"
-		@users.update_settings(user[:id],{'blocked'=>{
-			'abuse'=>false
-		}})
-		@users.next_answer(user[:id],'answer')
-		Bot.log.event(user[:id],'api_unblock_user')
+		user.settings['blocked']['abuse'] = false
+		user.next_answer('answer')
+		Bot.log.event(user.id,'api_unblock_user')
 		return self.get_screen(screen,user,msg)
 	end
 
 	def api_broadcast(msg,user,screen)
 		Bot.log.info "#{__method__}"
 		if screen[:save_session] then
-			current= user['session']['current'].nil? ? "home/welcome" :user['session']['current']
-			broadcast_msg=user['session']['api_payload']
-			previous_screen=self.find_by_name(current)
-			@users.next_answer(user[:id],'answer')
-			@users.clear_session(user[:id],'api_payload')
+			current         = user.state['current'].nil? ? "home/welcome" : user.state['current']
+			broadcast_msg   = user.state['api_payload']
+			previous_screen = self.find_by_name(current)
+			user.next_answer('answer')
+			user.reset('api_payload')
 			screen[:text]=screen[:text] % {broadcast_msg: broadcast_msg}
 		else
-			screen=@users.previous_state(user[:id])
+			screen=user.previous_state()
 			screen=self.find_by_name("home/welcome") if screen.nil?
 			if !screen[:text].nil? and !screen[:text].empty? then
 				screen[:text]="Merci pour votre attention ! Reprenons...\n"+screen[:text]

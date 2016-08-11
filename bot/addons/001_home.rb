@@ -124,18 +124,18 @@ END
 	def home_menu(msg,user,screen)
 		Bot.log.info "#{__method__}"
 		screen[:kbd_del]=["home/menu"] #comment if you want the home button to be displayed on the home menu
-		@users.next_answer(user[:id],'answer')
+		user.next_answer('answer')
 		return self.get_screen(screen,user,msg)
 	end
 
 	def home_ask_email(msg,user,screen)
 		Bot.log.info "#{__method__}"
-		@users.next_answer(user[:id],'free_text',1,"home/save_email_cb")
+		user.next_answer('free_text',1,"home/save_email_cb")
 		return self.get_screen(screen,user,msg)
 	end
 
 	def home_save_email_cb(msg,user,screen)
-		email=user['session']['buffer']
+		email=user.state['buffer']
 		Bot.log.info "#{__method__}: #{email}"
 		if email.match(/\A[^@\s]+@([^@\s]+\.)+[^@\s]+\z/).nil? then
 			screen=self.find_by_name("home/email_wrong",self.get_locale(user))

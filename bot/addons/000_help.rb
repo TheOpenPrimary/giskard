@@ -72,16 +72,15 @@ END
 		Bot.log.info "help_first_help_cb"
 		locale=self.get_locale(user)
 		if screen[:save_session] then
-			@users.next_answer(user[:id],'answer')
+			user.next_answer('answer')
 		else
-			screen=@users.previous_state(user[:id])
 			screen=self.find_by_name("home/welcome",locale) if screen.nil?
 			if !screen[:text].nil? then
 				screen[:text]=Bot.getMessage("help/first_help_ok",locale)+"\n"+screen[:text]
 			else
 				screen[:text]=Bot.getMessage("help/first_help_ok",locale)
 			end
-			@users.update_settings(user[:id],{'actions'=>{'first_help_given'=> true}})
+			user.settings['actions']['first_help_given'] = true
 		end
 		return self.get_screen(screen,user,msg)
 	end
