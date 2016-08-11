@@ -146,7 +146,7 @@ module Giskard
         user.username   = update.message.from.username
         user.last_name  = update.message.from.last_name
         user.first_name = update.message.from.first_name
-        msg             = Giskard::Message.new(id, text, user, 0, TG_BOT_NAME)
+        msg             = Giskard::Message.new(id, text, id, TG_BOT_NAME)
 				user,screen=Bot.nav.get(msg, user)
 				msg,options=format_answer(screen)
 				send_msg(update.message.chat.id,msg,options) unless msg.nil?

@@ -68,7 +68,7 @@ module Bot
 		def next_answer(type,size=-1,callback=nil,buffer="")
 			@state['buffer']          = buffer
 		  @state['expected_input']  = type
-		  @state['expected__size']  = size
+		  @state['expected_size']   = size
 			@state['callback']        = callback
 		end
     
