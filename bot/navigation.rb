@@ -161,9 +161,9 @@ module Bot
 				_jump_to          = _screen[:jump_to]
 				while !_jump_to.nil? do
 					_next_screen       = find_by_name(_jump_to,_locale)
-					_a,_b              = get_screen(_next_screen,user,msg)
+					_b                 = get_screen(_next_screen,user,msg)
 					_answer           += _b[:text] unless _b[:text].nil?
-					_screen.merge!(b) unless _b.nil?
+					_screen.merge!(_b) unless _b.nil?
 					_screen[:text]     = _answer unless _answer.nil?
 					_jump_to           = _next_screen[:jump_to]
 				end

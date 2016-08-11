@@ -169,18 +169,20 @@ module Giskard
         text            = update.message.text
         id              = update.message.chat.id
         id_receiv       = update.message.from.id
-        user            = Bot::User.new(id_receiv, TG_BOT_NAME)
+        user            = Bot::User.new()
+        user.id         = id
+        user.bot        = TG_BOT_NAME
         user.username   = update.message.from.username
         user.last_name  = update.message.from.last_name
         user.first_name = update.message.from.first_name
-        msg             = Giskard::Message.new(id, text, id, TG_BOT_NAME) # FIXME what is the seq id ?
+        msg             = Giskard::Message.new(id, text, id, TG_BOT_NAME)
         
         # handle new message
-				user,screen     = Bot.nav.get(msg, user)
+				screen     = Bot.nav.get(msg, user)
         
         # send answer
 				answer,options  = format_answer(screen)
-				send_msg(msg.chat.id,answer,options) unless answer.nil?
+				send_msg(id,answer,options) unless answer.nil?
 			rescue Exception=>e
 				# Having external services called here was a VERY bad idea as exceptions would not be rescued, it would make the worker crash... good job stupid !
 				Bot.log.fatal "#{e.message}\n#{e.backtrace.inspect}\n#{update.inspect}"
