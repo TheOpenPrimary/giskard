@@ -123,21 +123,26 @@ module Giskard
 			entries     = params['entry']
       entries.each do |entry|
         entry.messaging.each do |messaging|
+          puts messaging
           id_sender = messaging.sender.id
           id_receiv = messaging.recipient.id
-          id        = messaging.message.nil? ? messaging.message.mid : nil # FIXME case of postback
-          seq       = messaging.message.nil? ? messaging.message.seq : nil # FIXME case of postback
+          id        = messaging.message.nil? ? nil : messaging.message.mid
+          seq       = messaging.message.nil? ? nil : messaging.message.seq
           timestamp = messaging.time
           if not messaging.message.nil? then
-            text      = messaging.message.nil?
+            text      = messaging.message.text
           elsif not postback.nil? then
             text      = postback.payload
           end
+          user     = Bot::User.new()
+          user.id  = id_sender
+          user.bot = FB_BOT_NAME
           
           if not text.nil? then
             # read message
-            msg     = Giskard::Message.new(id_sender, id, postback, timestamp)
-  					screen  = Bot.nav.get(msg)
+            msg           = Giskard::Message.new(id, text, seq, FB_BOT_NAME)
+            msg.timestamp = timestamp
+  					screen        = Bot.nav.get(msg, user)
             # send answer
   					process_msg(user.id,screen[:text],screen) unless screen[:text].nil?
           end

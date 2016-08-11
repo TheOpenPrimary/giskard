@@ -24,12 +24,13 @@ module Giskard
     attr_accessor :timestamp         # when was the message sent?
     attr_accessor :id_user           # id of the sender
     attr_accessor :user              # class User for the sender
+    attr_accessor :bot               # name of the bot
     
-    def initialize(id_message, sender, text, timestamp)
+    def initialize(id_message, text, seq, bot)
       @id         = id_message
-      @id_user    = sender
       @text       = text
-      @timestamp  = timestamp
+      @seq        = seq
+      @bot        = bot
     end 
     
     
