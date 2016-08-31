@@ -92,7 +92,7 @@ module Giskard
 						if not img_url.match(/http/).nil? then
 							img='static/tmp/image'+File.extname(img_url)
 							File.open(img, 'wb') do |fo|
-								  fo.write open(img_url).read 
+								fo.write open(img_url).read 
 							end
 							img_url=img
 						end
@@ -139,14 +139,14 @@ module Giskard
 			begin
 				Bot::Db.init()
 				update = Telegram::Bot::Types::Update.new(params)
-        text            = update.message.text
-        id              = update.message.chat.id
-        id_receiv       = update.message.from.id
-        user            = Bot::User.new(id_receiv, TG_BOT_NAME)
-        user.username   = update.message.from.username
-        user.last_name  = update.message.from.last_name
-        user.first_name = update.message.from.first_name
-        msg             = Giskard::Message.new(id, text, id, TG_BOT_NAME)
+				text            = update.message.text
+				id              = update.message.chat.id
+				id_receiv       = update.message.from.id
+				user            = Bot::User.new(id_receiv, TG_BOT_NAME)
+				user.username   = update.message.from.username
+				user.last_name  = update.message.from.last_name
+				user.first_name = update.message.from.first_name
+				msg             = Giskard::Message.new(id, text, id, TG_BOT_NAME)
 				user,screen=Bot.nav.get(msg, user)
 				msg,options=format_answer(screen)
 				send_msg(update.message.chat.id,msg,options) unless msg.nil?
@@ -160,27 +160,27 @@ module Giskard
 
 		post '/' do
 			begin
-				Bot::Db.init() ## FIXME not good for perf to start the db each time
+				Bot::Db.init()
 				update          = Telegram::Bot::Types::Update.new(params)
 				if update.message.chat.type=="group" then
 					Bot.log.error "Message from group chat not supported:\n#{update.inspect}"
 					error! "Msg from group chat not supported: #{update.inspect}", 200 # if you put an error code here, telegram will keep sending you the same msg until you die
 				end
-        text            = update.message.text
-        id              = update.message.chat.id
-        id_receiv       = update.message.from.id
-        user            = Bot::User.new()
-        user.id         = id
-        user.bot        = TG_BOT_NAME
-        user.username   = update.message.from.username
-        user.last_name  = update.message.from.last_name
-        user.first_name = update.message.from.first_name
-        msg             = Giskard::Message.new(id, text, id, TG_BOT_NAME)
-        
-        # handle new message
+				text            = update.message.text
+				id              = update.message.chat.id
+				id_receiv       = update.message.from.id
+				user            = Bot::User.new()
+				user.id         = id
+				user.bot        = TG_BOT_NAME
+				user.username   = update.message.from.username
+				user.last_name  = update.message.from.last_name
+				user.first_name = update.message.from.first_name
+				msg             = Giskard::Message.new(id, text, id, TG_BOT_NAME)
+
+				# handle new message
 				screen     = Bot.nav.get(msg, user)
-        
-        # send answer
+
+				# send answer
 				answer,options  = format_answer(screen)
 				send_msg(id,answer,options) unless answer.nil?
 			rescue Exception=>e

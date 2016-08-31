@@ -37,7 +37,7 @@ module Bot
 			return 
 		end
 
-    # given a User instance with a Bot name and an ID, we look into the database to load missing informations, or to create it in the database
+		# given a User instance with a Bot name and an ID, we look into the database to load missing informations, or to create it in the database
 		def open(user)
 			res=self.search({
 				:by=>"user_id",
@@ -51,8 +51,8 @@ module Bot
 					res              = URI.parse("https://graph.facebook.com/v2.6/#{user.id}?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=#{FB_PAGEACCTOKEN}").read
 					r_user           = JSON.parse(res)
 					r_user           = JSON.parse(JSON.dump(r_user), object_class: OpenStruct)
-          user.first_name  = r_user.first_name
-          user.last_name   = r_user.last_name
+					user.first_name  = r_user.first_name
+					user.last_name   = r_user.last_name
 					Bot.log.debug("Nouveau participant : #{user.first_name} #{user.last_name}")
 				end
 				self.add(user)
@@ -60,16 +60,16 @@ module Bot
 				user = res.clone
 			end
 			@users[user.id]=user
-      return user # we have to return the user because Ruby has no native deep copy
+			return user # we have to return the user because Ruby has no native deep copy
 		end
-    
-    def close(user)
-      user.close()
-    end
-    
+
+		def close(user)
+			user.close()
+		end
+
 		def search(query)
 			return @users[query[:target]]
 		end
- 
+
 	end
 end

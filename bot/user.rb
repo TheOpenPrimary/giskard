@@ -21,23 +21,23 @@
 
 module Bot
 	class User
-    # general attr
-    attr_accessor :id                # id of the user
-    attr_accessor :first_name          
-    attr_accessor :last_name         
-    attr_accessor :username          
-    attr_accessor :settings
-    attr_accessor :bot_upgrade
-    attr_accessor :bot
-    
-    # FSM
-    attr_accessor :state
-    attr_accessor :previous_state
-    attr_accessor :previous_screen
+		# general attr
+		attr_accessor :id                # id of the user
+		attr_accessor :first_name          
+		attr_accessor :last_name         
+		attr_accessor :username          
+		attr_accessor :settings
+		attr_accessor :bot_upgrade
+		attr_accessor :bot
+
+		# FSM
+		attr_accessor :state
+		attr_accessor :previous_state
+		attr_accessor :previous_screen
 
 
 		def initialize()
-      self.initialize_fsm()
+			self.initialize_fsm()
 			@settings={
 				'blocked'=>{ 'abuse'=>false }, # the user has clearly done bad things 
 				'actions'=>{ 'first_help_given'=>false },
@@ -47,31 +47,31 @@ module Bot
 
 		def reset()
 			Bot.log.info "reset user #{@username}"
-      self.initialize()
+			self.initialize()
 		end
-    
-    # ___________________________________
-    # fsm
-    # -----------------------------------
-    def initialize_fsm()
+
+		# ___________________________________
+		# fsm
+		# -----------------------------------
+		def initialize_fsm()
 			@state = {
-        'last_msg_id'     => nil,
-			  'current'         => nil,
-			  'expected_input'  => "answer",
-			  'expected_size'   => -1,
-			  'buffer'          => "",
-        'callback'        => nil
-      }
-      @previous_state = @state.clone
-    end
-    
+				'last_msg_id'     => nil,
+				'current'         => nil,
+				'expected_input'  => "answer",
+				'expected_size'   => -1,
+				'buffer'          => "",
+				'callback'        => nil
+			}
+			@previous_state = @state.clone
+		end
+
 		def next_answer(type,size=-1,callback=nil,buffer="")
 			@state['buffer']          = buffer
-		  @state['expected_input']  = type
-		  @state['expected_size']   = size
+			@state['expected_input']  = type
+			@state['expected_size']   = size
 			@state['callback']        = callback
 		end
-    
+
 		def already_answered(msg)
 			return false if msg.seq ==-1 # external command
 			return true if not @state['last_msg_id'].nil? and @state['last_msg_id'].to_i>msg.seq.to_i
@@ -87,10 +87,10 @@ module Bot
 			@state = @previous_state.clone unless @previous_state.nil?
 			return screen
 		end
-    
-    # ___________________________________
-    # loading - saving
-    # -----------------------------------
+
+		# ___________________________________
+		# loading - saving
+		# -----------------------------------
 		def save()
 			return
 		end
@@ -99,7 +99,5 @@ module Bot
 			self.save()
 			# @users.delete(user_id) # To be uncommented once a persistant storage is in place
 		end
-
-
 	end
 end

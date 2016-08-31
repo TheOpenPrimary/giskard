@@ -92,65 +92,65 @@ module Bot
 			return SUPPORTED_LOCALES.include?(user.settings['locale']) ? user.settings['locale'] : 'en'
 		end
 
-    # Reads a message and gets an answer to it
-    # Call by an interface when a message is received
-    # @msg is a class Message. It should have a bot, a text and a seq id.
-    # @user is a class User. It is the sender. It should have an id
-    # return the next screen
+		# Reads a message and gets an answer to it
+		# Call by an interface when a message is received
+		# @msg is a class Message. It should have a bot, a text and a seq id.
+		# @user is a class User. It is the sender. It should have an id
+		# return the next screen
 		def get(msg, user)
-      Bot.log.debug "Read message from user #{user.id} to bot #{msg.bot} with seq #{msg.seq}: #{msg.text}"
-      
-      # load user if registered
-      user = @users.open(user)
+			Bot.log.debug "Read message from user #{user.id} to bot #{msg.bot} with seq #{msg.seq}: #{msg.text}"
+
+			# load user if registered
+			user = @users.open(user)
 			_input       = user.state['expected_input']
-      _callback    = user.state['callback']
+			_callback    = user.state['callback']
 
 			# we check that this message has not already been answered (i.e. bot sending a msg we already processed)
 			return nil,nil if user.already_answered(msg) and not DEBUG
-      
-      # if user.seq == 1 and not msg.seq ==-1 then
-      #   Bot.log.warn "Bot upgrade detected"
-      #   msg.seq =-1
-      #   msg.text  ='api/bot_upgrade'
-      # end
-      # if msg.seq == -1 then
-      #   # msg comes from api and not from telegram
-      #   api_cb,api_payload=msg.text.split("\n",2).each {|x| x.strip!}
-      #   raise "no callback given" if api_cb.nil?
-      #   user.next_answer('free_text',1,api_cb)
-      #   user.state['api_payload'] = api_payload if !api_payload.nil?
-      # end
-      
-      # reset
-      return self.get_reset(msg, user) if self.is_reset(msg.text)
-      
-      # we expect the user to have used the proposed keyboard to answer    
-      return self.get_button_answer(msg, user) if _input == 'answer'
 
-      # we expect the user to have answered by typing text manually
+			# if user.seq == 1 and not msg.seq ==-1 then
+			#   Bot.log.warn "Bot upgrade detected"
+			#   msg.seq =-1
+			#   msg.text  ='api/bot_upgrade'
+			# end
+			# if msg.seq == -1 then
+			#   # msg comes from api and not from telegram
+			#   api_cb,api_payload=msg.text.split("\n",2).each {|x| x.strip!}
+			#   raise "no callback given" if api_cb.nil?
+			#   user.next_answer('free_text',1,api_cb)
+			#   user.state['api_payload'] = api_payload if !api_payload.nil?
+			# end
+
+			# reset
+			return self.get_reset(msg, user) if self.is_reset(msg.text)
+
+			# we expect the user to have used the proposed keyboard to answer    
+			return self.get_button_answer(msg, user) if _input == 'answer'
+
+			# we expect the user to have answered by typing text manually
 			return self.get_text_answer(msg, user) if _input=='free_text' and self.respond_to?(_callback) and user.state['expected_size']>0
-        
-      # we didn't expect this message
+
+			# we didn't expect this message
 			return self.dont_understand(msg, user)
-      
-      @users.close(user)
+
+			@users.close(user)
 		end
 
-    def is_reset(text)
-        return RESET_WORDS.include?(text) ? true : false
-    end
-    
-    def get_reset(msg, user)
+		def is_reset(text)
+			return RESET_WORDS.include?(text) ? true : false
+		end
+
+		def get_reset(msg, user)
 			Bot.log.info "#{__method__} #{msg.text}"
-      _locale                 = self.get_locale(user)
-		  user.state['current']   = "home/welcome"
-      _screen                 = self.find_by_name(user.state['current'], _locale)
-      _screen                 = self.get_screen(_screen,user,msg)
-    end
-    
-    def get_button_answer(msg,user)
+			_locale                 = self.get_locale(user)
+			user.state['current']   = "home/welcome"
+			_screen                 = self.find_by_name(user.state['current'], _locale)
+			_screen                 = self.get_screen(_screen,user,msg)
+		end
+
+		def get_button_answer(msg,user)
 			Bot.log.info "#{__method__} #{msg.text}"
-      _callback          = self.to_callback(user.state['callback'].to_s)
+			_callback          = self.to_callback(user.state['callback'].to_s)
 			_locale            = self.get_locale(user)
 			_screen            = self.find_by_answer(msg.text,self.context(user.state['current']),_locale)
 			if not _screen.nil? then
@@ -168,16 +168,16 @@ module Bot
 					_jump_to           = _next_screen[:jump_to]
 				end
 			else
-					_screen     = self.dont_understand(msg, user)
+				_screen     = self.dont_understand(msg, user)
 			end
-      return _screen
-    end  
-    
-    def get_text_answer(msg, user)
+			return _screen
+		end  
+
+		def get_text_answer(msg, user)
 			Bot.log.info "#{__method__} #{msg.text}"
-      _callback                 = self.to_callback(user.state['callback'].to_s)
+			_callback                 = self.to_callback(user.state['callback'].to_s)
 			_locale                   = self.get_locale(user)
-      user.expected_size       -= 1
+			user.expected_size       -= 1
 			user.buffer               = user.buffer + msg.text unless msg.text.nil?
 			_screen                   = self.find_by_name(user.state['callback'], _locale)
 			user.state['callback']    = nil if _input_size==0
@@ -194,21 +194,21 @@ module Bot
 				_next_screen              = self.find_by_name(_current, _locale) if _next_screen[:id]!= _current and !_current.nil?
 				_jump_to                  = _next_screen[:jump_to]
 			end
-      return _screen
-    end
-    
-    # the message is not understood
+			return _screen
+		end
+
+		# the message is not understood
 		def dont_understand(msg,user)
 			Bot.log.info "#{__method__} #{msg.text}"
 			locale        = self.get_locale(user)
-      first_help    = user.settings['actions']['first_help_given']
+			first_help    = user.settings['actions']['first_help_given']
 			if not first_help then
-        user.settings['actions']['first_help_given']  = true
+				user.settings['actions']['first_help_given']  = true
 				screen      = self.find_by_name("help/first_help",locale)
 				screen      = self.format_answer(screen,user)
 				callback    = self.to_callback(screen[:callback].to_s) if not screen.nil?
 				self.method(callback).call(msg,user,screen) if self.respond_to?(callback)
-      elsif user.previous_state.nil? or user.previous_state['current'] != "system/dont_understand" then
+			elsif user.previous_state.nil? or user.previous_state['current'] != "system/dont_understand" then
 				screen      = self.find_by_name("system/dont_understand",locale)
 				screen      = self.format_answer(screen,user)
 			end

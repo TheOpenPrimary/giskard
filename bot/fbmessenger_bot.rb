@@ -109,7 +109,7 @@ module Giskard
 			end
 		end
 
-    # challenge for creating a webhook
+		# challenge for creating a webhook
 		get '/fbmessenger' do
 			if params['hub.verify_token']==FB_SECRET then
 				return params['hub.challenge'].to_i
@@ -118,39 +118,36 @@ module Giskard
 			end
 		end
 
-    # we receive a new message
+		# we receive a new message
 		post '/fbmessenger' do
 			entries     = params['entry']
-      entries.each do |entry|
-        entry.messaging.each do |messaging|
-          puts messaging
-          id_sender = messaging.sender.id
-          id_receiv = messaging.recipient.id
-          id        = messaging.message.nil? ? nil : messaging.message.mid
-          seq       = messaging.message.nil? ? nil : messaging.message.seq
-          timestamp = messaging.time
-          if not messaging.message.nil? then
-            text      = messaging.message.text
-          elsif not postback.nil? then
-            text      = postback.payload
-          end
-          user     = Bot::User.new()
-          user.id  = id_sender
-          user.bot = FB_BOT_NAME
-          
-          if not text.nil? then
-            # read message
-            msg           = Giskard::Message.new(id, text, seq, FB_BOT_NAME)
-            msg.timestamp = timestamp
-  					screen        = Bot.nav.get(msg, user)
-            # send answer
-  					process_msg(user.id,screen[:text],screen) unless screen[:text].nil?
-          end
-        end
-      end   
+			entries.each do |entry|
+				entry.messaging.each do |messaging|
+					puts messaging
+					id_sender = messaging.sender.id
+					id_receiv = messaging.recipient.id
+					id        = messaging.message.nil? ? nil : messaging.message.mid
+					seq       = messaging.message.nil? ? nil : messaging.message.seq
+					timestamp = messaging.time
+					if not messaging.message.nil? then
+						text      = messaging.message.text
+					elsif not postback.nil? then
+						text      = postback.payload
+					end
+					user     = Bot::User.new()
+					user.id  = id_sender
+					user.bot = FB_BOT_NAME
+
+					if not text.nil? then
+						# read message
+						msg           = Giskard::Message.new(id, text, seq, FB_BOT_NAME)
+						msg.timestamp = timestamp
+						screen        = Bot.nav.get(msg, user)
+						# send answer
+						process_msg(user.id,screen[:text],screen) unless screen[:text].nil?
+					end
+				end
+			end   
 		end
-    
-    
 	end
 end
-
