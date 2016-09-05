@@ -130,7 +130,7 @@ END
 
 	def home_ask_email(msg,user,screen)
 		Bot.log.info "#{__method__}"
-		user.next_answer('free_text',1,"home/save_email_cb")
+		user.next_answer('free_text',1,"home_save_email_cb")
 		return self.get_screen(screen,user,msg)
 	end
 

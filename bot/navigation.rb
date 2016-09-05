@@ -143,7 +143,7 @@ module Bot
 		def get_reset(msg, user)
 			Bot.log.info "#{__method__} #{msg.text}"
 			_locale                 = self.get_locale(user)
-			user.state['current']   = "home/welcome"
+			user.state['current']   = "houston/welcome"
 			_screen                 = self.find_by_name(user.state['current'], _locale)
 			_screen                 = self.get_screen(_screen,user,msg)
 		end
@@ -175,15 +175,16 @@ module Bot
 
 		def get_text_answer(msg, user)
 			Bot.log.info "#{__method__} #{msg.text}"
-			_callback                 = self.to_callback(user.state['callback'].to_s)
-			_locale                   = self.get_locale(user)
-			user.expected_size       -= 1
-			user.buffer               = user.buffer + msg.text unless msg.text.nil?
-			_screen                   = self.find_by_name(user.state['callback'], _locale)
-			user.state['callback']    = nil if _input_size==0
-			_screen                   = self.method(_callback).call(msg,user,_screen) if _input_size==0
-			_answer                   = _screen[:text].nil? ? "":screen[:text]
-			_jump_to                  = _screen[:jump_to]
+			_callback                 	= self.to_callback(user.state['callback'].to_s)
+			_locale                   	= self.get_locale(user)
+			user.state['expected_size'] -= 1
+			user.state['buffer']		= user.state['buffer'] + msg.text unless msg.text.nil?
+			_screen                   	= self.find_by_name(user.state['callback'], _locale)
+			_input_size					= msg.text.size
+			user.state['callback']    	= nil if _input_size==0
+			_screen                   	= self.method(_callback).call(msg,user,_screen) if _input_size==0
+			_answer                   	= _screen[:text].nil? ? "":screen[:text]
+			_jump_to                  	= _screen[:jump_to]
 			while !_jump_to.nil? do
 				_next_screen              = self.find_by_name(_jump_to,_locale)
 				_b                        = self.get_screen(_next_screen,user,msg) # b=screen
