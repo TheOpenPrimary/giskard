@@ -103,7 +103,7 @@ module Bot
 			# load user if registered
 			user = @users.open(user)
 			_input       = user.state['expected_input']
-			_callback    = user.state['callback']
+			_callback    = self.to_callback(user.state['callback'].to_s)
 
 			# we check that this message has not already been answered (i.e. bot sending a msg we already processed)
 			return nil,nil if user.already_answered(msg) and not DEBUG
@@ -124,7 +124,7 @@ module Bot
 			# reset
 			return self.get_reset(msg, user) if self.is_reset(msg.text)
 
-			# we expect the user to have used the proposed keyboard to answer    
+			# we expect the user to have used the proposed keyboard to answer
 			return self.get_button_answer(msg, user) if _input == 'answer'
 
 			# we expect the user to have answered by typing text manually
@@ -143,13 +143,13 @@ module Bot
 		def get_reset(msg, user)
 			Bot.log.info "#{__method__} #{msg.text}"
 			_locale                 = self.get_locale(user)
-			user.state['current']   = "houston/welcome"
+			user.state['current']   = "home/welcome"
 			_screen                 = self.find_by_name(user.state['current'], _locale)
 			_screen                 = self.get_screen(_screen,user,msg)
 		end
 
 		def get_button_answer(msg,user)
-			Bot.log.info "#{__method__} #{msg.text}"
+			Bot.log.info "#{__method__} #{msg.text} #{user.state['callback']}"
 			_callback          = self.to_callback(user.state['callback'].to_s)
 			_locale            = self.get_locale(user)
 			_screen            = self.find_by_answer(msg.text,self.context(user.state['current']),_locale)
@@ -171,25 +171,26 @@ module Bot
 				_screen     = self.dont_understand(msg, user)
 			end
 			return _screen
-		end  
+		end
 
 		def get_text_answer(msg, user)
-			Bot.log.info "#{__method__} #{msg.text}"
+			Bot.log.info "#{__method__} #{msg.text}  #{user.state['callback']}"
 			_callback                 	= self.to_callback(user.state['callback'].to_s)
 			_locale                   	= self.get_locale(user)
-			user.state['expected_size'] -= 1
+			#Bot.log.info "#{user.state['expected_input_size']}"
+			#user.state['expected_input_size'] -= 1
+			#_input_size					= user.state['expected_input_size']
 			user.state['buffer']		= user.state['buffer'] + msg.text unless msg.text.nil?
 			_screen                   	= self.find_by_name(user.state['callback'], _locale)
-			_input_size					= msg.text.size
-			user.state['callback']    	= nil if _input_size==0
-			_screen                   	= self.method(_callback).call(msg,user,_screen) if _input_size==0
-			_answer                   	= _screen[:text].nil? ? "":screen[:text]
+			#user.state['callback']    	= nil if _input_size==0
+			_screen                   	= self.method(_callback).call(msg,user,_screen) #if _input_size==0
+			_answer                   	= _screen[:text].nil? ? "" : _screen[:text]
 			_jump_to                  	= _screen[:jump_to]
 			while !_jump_to.nil? do
 				_next_screen              = self.find_by_name(_jump_to,_locale)
 				_b                        = self.get_screen(_next_screen,user,msg) # b=screen
 				_answer                  += _b[:text] unless _b[:text].nil?
-				_screen.merge!(b) unless _b.nil?
+				_screen.merge!(_b) unless _b.nil?
 				_screen[:text]            = _answer unless _answer.nil?
 				_current                  = user.state['current']
 				_next_screen              = self.find_by_name(_current, _locale) if _next_screen[:id]!= _current and !_current.nil?
@@ -221,7 +222,7 @@ module Bot
 			return nil,nil if screen.nil?
 			callback=self.to_callback(screen[:callback].to_s) unless screen[:callback].nil?
 			previous=caller_locations(1,1)[0].label
-			user.state['current'] = screen[:id] 
+			user.state['current'] = screen[:id]
 			unless IGNORE_CONTEXT.include?(self.context(screen[:id])) then
 				user.previous_screen = screen
 				user.previous_state  = user.state.clone
@@ -240,7 +241,7 @@ module Bot
 			begin
 				screen=@screens[n1][n2]
 				if screen then
-					screen[:id]     = name 
+					screen[:id]     = name
 					screen          = screen.clone
 					screen[:text]   = Bot.getMessage(name,locale)
 					screen[:answer] = Bot.getMessage(screen[:answer],locale) unless screen[:answer].nil?
@@ -261,7 +262,7 @@ module Bot
 				screen_id=tmp[ctx.to_sym]
 			end
 			Bot.log.error("find_by_answer: screen for #{answer} not found") if screen_id.nil?
-			screen=@screens[ctx.to_sym][screen_id] 
+			screen=@screens[ctx.to_sym][screen_id]
 			if screen then
 				screen[:id]     = self.path([ctx,screen_id])
 				screen          = screen.clone

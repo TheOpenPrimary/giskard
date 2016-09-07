@@ -26,40 +26,42 @@ module Houston
 					:yes=>"Oui",
 					:welcome_answer=>"/start",
 					:welcome=><<-END,
-Bonjour %{firstname} !
-Je suis Houston. #{Bot.emoticons[:blush]}
-Mon rôle est de noter votre prorité pour améliorer la France.
-Je vous propose à la fin de notre conversation une image à relayer sur les réseaux sociaux.
-Mais assez discuté, commençons !
+Hi %{firstname} !
+I am Houston. #{Bot.emoticons[:blush]}
+My purpose is to write down your message for French politics.
+At the end, I will offer you an image to convey on your social networks.
+Let's start!
 END
 					:menu_answer=>"#{Bot.emoticons[:home]} Accueil",
 					:menu=><<-END,
-Que voulez-vous faire ? Utilisez les boutons du menu ci-dessous pour m'indiquer ce que vous souhaitez faire.
+What do you want to do?
+You can recover a former message, or write a new one.
+Please use the following buttons to give me your choice.
 END
-					:ask_img_answer=>"Retrouver mon message",
+					:ask_img_answer=>"Recover",
 					:ask_img=><<-END,
-Je recherche votre demande...
+Let me recover your message...
 END
 					:get_img=><<-END,
-Voici votre demande !
+Here is your message!
 END
 					:bad_img=><<-END,
-Je suis navré que l'image ne vous plaise pas.  #{Bot.emoticons[:confused]}
-Reprenons. 
+I feel sorry that you don't like the image.  #{Bot.emoticons[:confused]}
+Let's try again.
 END
 					:good_img=><<-END,
-Génial ! Je vous laisse alors partager cette image sur vos réseaux sociaux ! 
+Great! Please share this image on your social networks!
 END
 					:ask_wrong=><<-END,
-Hmmm... Je ne retrouve pas votre priorité... #{Bot.emoticons[:confused]}
-Reprenons.
+Hmmm... I can't recover your former message... #{Bot.emoticons[:confused]}
+Please write a new one.
 END
-					:ask_txt_answer=>"Ecrire mon message",
+					:ask_txt_answer=>"Write",
 					:ask_txt=><<-END,
-D'après vous, quelle est la priorité en France ?
+According to you, what is the priority in France?
 END
 					:end=><<-END,
-J'espère que vous êtes satifait(e) de moi. À bientôt !
+I hope you enjoyed our conversation! See you!
 END
 				}
 			},
@@ -77,9 +79,10 @@ Mais assez discuté, commençons !
 END
 					:menu_answer=>"#{Bot.emoticons[:home]} Accueil",
 					:menu=><<-END,
-Que voulez-vous faire ? Utilisez les boutons du menu ci-dessous pour m'indiquer ce que vous souhaitez faire.
+Que voulez-vous faire ?
+Utilisez les boutons du menu ci-dessous pour m'indiquer ce que vous souhaitez faire.
 END
-					:ask_img_answer=>"Retrouver mon message",
+					:ask_img_answer=>"Retrouver",
 					:ask_img=><<-END,
 Je recherche votre demande...
 END
@@ -88,16 +91,16 @@ Voici votre demande !
 END
 					:bad_img=><<-END,
 Je suis navré que l'image ne vous plaise pas.  #{Bot.emoticons[:confused]}
-Reprenons. 
+Reprenons.
 END
 					:good_img=><<-END,
-Génial ! Je vous laisse alors partager cette image sur vos réseaux sociaux ! 
+Génial ! Je vous laisse alors partager cette image sur vos réseaux sociaux !
 END
 					:ask_wrong=><<-END,
 Hmmm... Je ne retrouve pas votre priorité... #{Bot.emoticons[:confused]}
 Reprenons.
 END
-					:ask_txt_answer=>"Ecrire mon message",
+					:ask_txt_answer=>"Ecrire",
 					:ask_txt=><<-END,
 D'après vous, quelle est la priorité en France ?
 END
@@ -122,7 +125,7 @@ END
 					:kbd=>["houston/ask_img","houston/ask_txt"],
 					:kbd_options=>{:resize_keyboard=>true,:one_time_keyboard=>false,:selective=>true}
 				},
-				
+
 				:get_img=>{
 					:callback=>"houston/get_img",
 					:parse_mode=>"HTML",
@@ -137,7 +140,7 @@ END
 					:answer=>"houston/yes",
 					:jump_to=>"houston/end"
 				},
-				
+
 				:ask_img=>{
 					:answer=>"houston/ask_img_answer",
 					:callback=>"houston/ask_img"
@@ -173,14 +176,14 @@ END
 		Bot.log.info "#{__method__}"
 		# search for an image
 		# if image exists:
-		if 1==0 then
+		if 1==1 then
 			screen=self.find_by_name("houston/get_img",self.get_locale(user))
 		else
 			screen=self.find_by_name("houston/ask_wrong",self.get_locale(user))
 		end
 		return self.get_screen(screen,user,msg)
 	end
-	
+
 	def houston_ask_txt(msg,user,screen)
 		Bot.log.info "#{__method__}"
 		user.next_answer('free_text',1,"houston_save_txt")
@@ -199,8 +202,9 @@ END
 		Bot.log.info "#{__method__}: #{txt}"
 		# TODO find the image associated to the user
 		img = ""
-		screen=self.find_by_name("houston/ask_saved",self.get_locale(user))
+		screen=self.find_by_name("houston/get_img",self.get_locale(user))
 		screen[:text]=screen[:text] % {:img=>img}
+		Bot.log.info "#{screen}"
 		return self.get_screen(screen,user,msg)
 	end
 
@@ -211,7 +215,7 @@ END
 		if email.match(/\A[^@\s]+@([^@\s]+\.)+[^@\s]+\z/).nil? then
 			screen=self.find_by_name("houston/email_wrong",self.get_locale(user))
 			screen[:text]=screen[:text] % {:email=>email}
-			return self.get_screen(screen,user,msg) 
+			return self.get_screen(screen,user,msg)
 		end
 		screen=self.find_by_name("houston/email_saved",self.get_locale(user))
 		screen[:text]=screen[:text] % {:email=>email}
