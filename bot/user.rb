@@ -23,9 +23,9 @@ module Bot
 	class User
 		# general attr
 		attr_accessor :id                # id of the user
-		attr_accessor :first_name          
-		attr_accessor :last_name         
-		attr_accessor :username          
+		attr_accessor :first_name
+		attr_accessor :last_name
+		attr_accessor :username
 		attr_accessor :settings
 		attr_accessor :bot_upgrade
 		attr_accessor :bot
@@ -39,7 +39,7 @@ module Bot
 		def initialize()
 			self.initialize_fsm()
 			@settings={
-				'blocked'=>{ 'abuse'=>false }, # the user has clearly done bad things 
+				'blocked'=>{ 'abuse'=>false }, # the user has clearly done bad things
 				'actions'=>{ 'first_help_given'=>false },
 				'locale'=>'fr'
 			}
@@ -74,6 +74,7 @@ module Bot
 
 		def already_answered(msg)
 			return false if msg.seq ==-1 # external command
+			Bot.log.debug "Last msg id: #{@state['last_msg_id']} and current id: #{msg.seq}"
 			return true if not @state['last_msg_id'].nil? and @state['last_msg_id'].to_i>msg.seq.to_i
 			@state['last_msg_id'] = msg.seq.to_i
 			return false

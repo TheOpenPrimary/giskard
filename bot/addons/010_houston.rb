@@ -87,7 +87,7 @@ END
 Je recherche votre demande...
 END
 					:get_img=><<-END,
-Voici votre demande !
+Voici votre demande ! Vous convient-elle?
 END
 					:bad_img=><<-END,
 Je suis navré que l'image ne vous plaise pas.  #{Bot.emoticons[:confused]}
@@ -138,7 +138,7 @@ END
 				},
 				:good_img=>{
 					:answer=>"houston/yes",
-					:jump_to=>"houston/end"
+					:callback=>"houston/end"
 				},
 
 				:ask_img=>{
@@ -162,6 +162,12 @@ END
 	def houston_welcome(msg,user,screen)
 		Bot.log.info "#{__method__}"
 		screen=self.find_by_name("houston/menu",self.get_locale(user))
+		return self.get_screen(screen,user,msg)
+	end
+
+	def houston_end(msg,user,screen)
+		Bot.log.info "#{__method__}"
+		user.next_answer('answer')
 		return self.get_screen(screen,user,msg)
 	end
 
@@ -195,16 +201,17 @@ END
 		Bot.log.info "#{__method__}: #{txt}"
 		# process the text
 		# TODO
-		return self.houston_get_img(self.get_locale(user), screen)
+		return self.houston_get_img(msg, user, screen)
 	end
 
 	def houston_get_img(msg,user,screen)
-		Bot.log.info "#{__method__}: #{txt}"
+		img=user.state['buffer']
+		Bot.log.info "#{__method__}: #{img}"
 		# TODO find the image associated to the user
-		img = ""
 		screen=self.find_by_name("houston/get_img",self.get_locale(user))
 		screen[:text]=screen[:text] % {:img=>img}
 		Bot.log.info "#{screen}"
+		user.next_answer('answer')
 		return self.get_screen(screen,user,msg)
 	end
 
