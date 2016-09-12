@@ -140,7 +140,7 @@ END
 		if email.match(/\A[^@\s]+@([^@\s]+\.)+[^@\s]+\z/).nil? then
 			screen=self.find_by_name("home/email_wrong",self.get_locale(user))
 			screen[:text]=screen[:text] % {:email=>email}
-			return self.get_screen(screen,user,msg) 
+			return self.get_screen(screen,user,msg)
 		end
 		screen=self.find_by_name("home/email_saved",self.get_locale(user))
 		screen[:text]=screen[:text] % {:email=>email}
