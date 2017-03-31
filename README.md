@@ -74,7 +74,7 @@ screens={
 			:answer=>"home/menu_answer",
 			:callback=>"home/menu",
 			:parse_mode=>"HTML",
-			:kbd=>["home/ask_email","home/my_action_2"],
+			:kbd=>[{"text"=>"home/ask_email"},{"text"=>"home/my_action_2"}],
 			:kbd_options=>{:resize_keyboard=>true,:one_time_keyboard=>false,:selective=>true}
 		},
 		:ask_email=>{
@@ -112,7 +112,7 @@ Each screen displays a message to the user. For a given screen, Giskard displays
 The add-on registers its screens to Giskard by calling the ```Bot.updateScreens()``` method in the ```self.included()``` method. It is important to note also that the add-on can register a menu in the bot main menu by calling the ```Bot.addMenu()``` method.
 ```ruby
 Bot.updateScreens(screens)
-Bot.addMenu({:home=>{:menu=>{:kbd=>"home/menu"}}})
+Bot.addMenu({:home=>{:menu=>{:kbd=>{"text"=>"home/menu"}}}})
 ```
 
 ### Callbacks
@@ -303,11 +303,11 @@ $ sudo bundle install
 
 Giskard is a rake application. To run Giskard on your machine, you can use :
 ```
-$ bundle exec unicorn -c config/unicorn.conf
+$ bundle exec unicorn -c config/unicorn.conf.rb
 ```
 To run Giskard in production, you can use :
 ```
-$ bundle exec unicorn -E production -c config/unicorn.conf
+$ bundle exec unicorn -E production -c config/unicorn.conf.rb
 ```
 
 ### Performance notes

@@ -59,11 +59,13 @@ module Bot
 					t=nil
 					n1,n2=self.nodes(k).map &:to_sym
 					size=@screens[n1][n2][:kbd].length
-					@screens[n1][n2][:kbd].each_with_index do |u,i|
-						m1,m2=self.nodes(u).map &:to_sym
+					@screens[n1][n2][:kbd].each do |u|
+						m1,m2=self.nodes(u['text']).map &:to_sym
 						raise "Screen identifier #{m1}/#{m2} does not exist" if @screens[m1].nil? or @screens[m1][m2].nil?
 						item=Bot.getMessage(@screens[m1][m2][:answer],l)
-						@keyboards[l][k].push(item)
+						tmp_key=u.clone
+						tmp_key['text']=item
+						@keyboards[l][k].push(tmp_key)
 					end
 				end
 			end
@@ -283,14 +285,16 @@ module Bot
 			} unless screen.nil? or screen[:text].nil?
 			locale=self.get_locale(user)
 			kbd=@keyboards[locale][screen[:id]].clone if @keyboards[locale][screen[:id]]
-			if screen[:kbd_del] then
-				screen[:kbd_del].each do |k|
-					n1,n2=self.nodes(k)
-					kbd.delete(Bot.getMessage(@screens[n1][n2][:answer],locale))
+			if not kbd.nil? then
+				if screen[:kbd_del] then
+					screen[:kbd_del].each do |k|
+						n1,n2=self.nodes(k)
+						kbd.delete(Bot.getMessage(@screens[n1][n2][:answer],locale))
+					end
 				end
+				screen[:kbd].each_with_index { |k,i| k.merge!(kbd[i]) }
+				screen[:kbd_add].each { |k| kbd.unshift(k) } if screen[:kbd_add]
 			end
-			screen[:kbd_add].each { |k| kbd.unshift(k) } if screen[:kbd_add]
-			screen[:kbd]=kbd
 			return screen
 		end
 	end

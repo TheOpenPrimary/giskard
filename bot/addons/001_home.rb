@@ -91,7 +91,7 @@ END
 					:answer=>"home/menu_answer",
 					:callback=>"home/menu",
 					:parse_mode=>"HTML",
-					:kbd=>["home/ask_email","home/my_action_2"],
+					:kbd=>[{"text"=>"home/ask_email"},{"text"=>"home/my_action_2"}],
 					:kbd_options=>{:resize_keyboard=>true,:one_time_keyboard=>false,:selective=>true}
 				},
 				:ask_email=>{
@@ -112,7 +112,7 @@ END
 		}
 		Bot.updateScreens(screens)
 		Bot.updateMessages(messages)
-		Bot.addMenu({:home=>{:menu=>{:kbd=>"home/menu"}}})
+		Bot.addMenu({:home=>{:menu=>{:kbd=>{"text"=>"home/menu"}}}})
 	end
 
 	def home_welcome(msg,user,screen)

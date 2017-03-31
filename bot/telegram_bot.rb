@@ -41,7 +41,7 @@ module Giskard
 						row=[]
 						kbd.each_with_index do |r,i|
 							idx=i+1
-							row.push(r)
+							row.push(r['text'])
 							if (idx%2)==0 then
 								newkbd.push(row)
 								row=[]
