@@ -24,14 +24,15 @@ module Giskard
 		format :json
 
 		def self.send(payload,type="messages",file_url=nil)
-			Bot.log.debug << "sending #{payload} via #{type}......"
+			Bot.log.debug "sending payload via #{type} :"
+			Bot.log.debug payload
 			if file_url.nil? then
 				res = RestClient.post "https://graph.facebook.com/v2.6/me/#{type}?access_token=#{FB_PAGEACCTOKEN}", payload.to_json, :content_type => :json
 			else # image upload 
 				params={"recipient"=>payload['recipient'], "message"=>payload['message'], "filedata"=>File.new(file_url,'rb'),"multipart"=>true}
 				res = RestClient.post "https://graph.facebook.com/v2.6/me/#{type}?access_token=#{FB_PAGEACCTOKEN}",params
 			end
-			Bot.log.debug << "#{res.code}\n"
+			Bot.log.debug "sending done (code: #{res.code})"
 		end
 
 		def self.init() 
