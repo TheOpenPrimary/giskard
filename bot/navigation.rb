@@ -122,6 +122,7 @@ module Bot
 			#   user.next_answer('free_text',1,api_cb)
 			#   user.state['api_payload'] = api_payload if !api_payload.nil?
 			# end
+			return self.get_api_answer(msg, user) if msg.seq==-1
 
 			# reset
 			return self.get_reset(msg, user) if self.is_reset(msg.text)
@@ -140,6 +141,31 @@ module Bot
 
 		def is_reset(text)
 			return RESET_WORDS.include?(text) ? true : false
+		end
+
+		def get_api_answer(msg,user)
+			Bot.log.info "#{__method__} #{msg.text}"
+			_callback          = self.to_callback(user.state['callback'].to_s)
+			_locale            = self.get_locale(user)
+			_screen                 = self.find_by_name(msg.text, _locale)
+			if not _screen.nil? then
+				_screen           = get_screen(_screen,user,msg)
+				_answer           = _screen[:text].nil? ? "" : _screen[:text]
+				_current          = user.state['current']
+				_screen           = self.find_by_name(_current,_locale) if _screen[:id]!= _current and !_current.nil?
+				_jump_to          = _screen[:jump_to]
+				while !_jump_to.nil? do
+					_next_screen       = find_by_name(_jump_to,_locale)
+					_b                 = get_screen(_next_screen,user,msg)
+					_answer           += _b[:text] unless _b[:text].nil?
+					_screen.merge!(_b) unless _b.nil?
+					_screen[:text]     = _answer unless _answer.nil?
+					_jump_to           = _next_screen[:jump_to]
+				end
+			else
+				_screen     = self.dont_understand(msg, user)
+			end
+			return _screen
 		end
 
 		def get_reset(msg, user)

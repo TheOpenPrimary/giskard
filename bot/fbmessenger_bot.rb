@@ -139,33 +139,46 @@ module Giskard
 
 		# we receive a new message
 		post '/fbmessenger' do
-			entries     = params['entry']
-			entries.each do |entry|
-				entry.messaging.each do |messaging|
-					Bot.log.debug "#{messaging}"
-					id_sender = messaging.sender.id
-					id_receiv = messaging.recipient.id
-					id        = messaging.message.nil? ? nil : messaging.message.mid
-					seq       = messaging.message.nil? ? nil : messaging.message.seq
-					timestamp = messaging.timestamp
-					postback  = messaging.postback
-					if not messaging.message.nil? then
-						msg = Giskard::FB::Message.new(id, messaging.message.text, seq, FB_BOT_NAME)
-					elsif not postback.nil? then
-						msg = Giskard::FB::Message.new(id, postback.payload, seq, FB_BOT_NAME)
-					end
-					user     = Bot::User.new()
-					user.id  = id_sender
-					user.bot = FB_BOT_NAME
-					if not msg.nil? then
-						# read message
-						msg.timestamp = timestamp
-						screen        = Bot.nav.get(msg, user)
-						# send answer
-						process_msg(user.id,screen[:text],screen) unless screen[:text].nil?
+			object 	    = params['object']
+			if object=='page' then
+				entries     = params['entry']
+				entries.each do |entry|
+					entry.messaging.each do |messaging|
+						Bot.log.debug "#{messaging}"
+						id_sender = messaging.sender.id
+						id_receiv = messaging.recipient.id
+						id        = messaging.message.nil? ? nil : messaging.message.mid
+						seq       = messaging.message.nil? ? nil : messaging.message.seq
+						timestamp = messaging.timestamp
+						postback  = messaging.postback
+						if not messaging.message.nil? then
+							msg = Giskard::FB::Message.new(id, messaging.message.text, seq, FB_BOT_NAME)
+						elsif not postback.nil? then
+							msg = Giskard::FB::Message.new(id, postback.payload, seq, FB_BOT_NAME)
+						end
+						user     = Bot::User.new()
+						user.id  = id_sender
+						user.bot = FB_BOT_NAME
+						if not msg.nil? then
+							# read message
+							msg.timestamp = timestamp
+							screen        = Bot.nav.get(msg, user)
+							# send answer
+							process_msg(user.id,screen[:text],screen) unless screen[:text].nil?
+						end
 					end
 				end
-			end   
+			elsif object=='api' then # api call / not from messenger
+				cmd=params['cmd']
+				uid=params['uid']
+				return if cmd.nil? or cmd.empty?
+				return if uid.nil? or uid.empty?
+				msg = Giskard::FB::Message.new(nil,cmd,-1,FB_BOT_NAME)
+				user     = Bot::User.new()
+				user.id  = uid
+				screen = Bot.nav.get(msg, user)
+				process_msg(user.id,screen[:text],screen) unless screen[:text].nil?
+			end
 		end
 	end
 end
