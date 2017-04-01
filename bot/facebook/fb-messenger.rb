@@ -169,6 +169,9 @@ module Giskard
 				screen = Bot.nav.get(msg, user)
 				process_msg(user.id,screen[:text],screen) unless screen[:text].nil?
 			end
+		ensure
+			Giskard::Db.close()
+		end	
 		end # post
 	end # class
 end # module FB
