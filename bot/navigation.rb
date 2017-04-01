@@ -16,7 +16,7 @@
    limitations under the License.
 =end
 
-module Bot
+module Giskard
 	class Navigation
 		class << self
 			attr_accessor :nav
@@ -30,7 +30,6 @@ module Bot
 		end
 
 		def initialize
-			@users = Bot::Users.new()
 			@answers = {}
 			@keyboards = {}
 			@screens=Bot.screens
@@ -100,10 +99,8 @@ module Bot
 		# @user is a class User. It is the sender. It should have an id
 		# return the next screen
 		def get(msg, user)
-			Bot.log.debug "Read message from user #{user.id} to bot #{msg.bot} with seq #{msg.seq}: #{msg.text}"
+			Bot.log.debug "Read message from user #{user.id}: #{msg.text}"
 
-			# load user if registered
-			user = @users.open(user)
 			_input       = user.state['expected_input']
 			_callback    = self.to_callback(user.state['callback'].to_s)
 
@@ -135,8 +132,6 @@ module Bot
 
 			# we didn't expect this message
 			return self.dont_understand(msg, user)
-
-			@users.close(user)
 		end
 
 		def is_reset(text)

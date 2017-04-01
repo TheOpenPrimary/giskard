@@ -7,17 +7,19 @@ use Rack::Cors do
 	end
 end
 
-Bot.log=Bot::Log.new()
-Bot::Navigation.load_addons()
-Bot.nav=Bot::Navigation.new()
+Bot.log=Giskard::Log.new()
+Bot.db=Giskard::Db.new()
+Giskard::Navigation.load_addons()
+Bot.nav=Giskard::Navigation.new()
+
 bots=[]
 if TELEGRAM then
-	Giskard::TelegramBot.client=Telegram::Bot::Client.new(TG_TOKEN)
-	bots.push(Giskard::TelegramBot)
+	Giskard::TG::Messenger.client=Telegram::Bot::Client.new(TG_TOKEN)
+	bots.push(Giskard::TG::Messenger)
 end
 if FBMESSENGER then
-	Giskard::FBMessengerBot.init()
-	bots.push(Giskard::FBMessengerBot)
-end	
+	Giskard::FB::Messenger.init()
+	bots.push(Giskard::FB::Messenger)
+end
 
 run Rack::Cascade.new bots

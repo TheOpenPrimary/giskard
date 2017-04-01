@@ -16,24 +16,24 @@
    limitations under the License.
 =end
 
-# define a class for 1 user
+# parent class for User. Contains what is used by the core Bot
 
 
-module Bot
+module Giskard
+	module Core
 	class User
 		# general attr
-		attr_accessor :id                # id of the user
 		attr_accessor :first_name
 		attr_accessor :last_name
-		attr_accessor :username
 		attr_accessor :settings
 		attr_accessor :bot_upgrade
-		attr_accessor :bot
+		attr_accessor :messenger
 
 		# FSM
 		attr_accessor :state
 		attr_accessor :previous_state
 		attr_accessor :previous_screen
+
 
 
 		def initialize()
@@ -72,13 +72,6 @@ module Bot
 			@state['callback']        = callback
 		end
 
-		def already_answered(msg)
-			return false if msg.seq ==-1 # external command
-			Bot.log.debug "Last msg id: #{@state['last_msg_id']} and current id: #{msg.seq}"
-			return true if not @state['last_msg_id'].nil? and @state['last_msg_id'].to_i>msg.seq.to_i
-			@state['last_msg_id'] = msg.seq.to_i
-			return false
-		end
 
 		def previous_state()
 			screen=@state['previous_screen']
@@ -89,16 +82,6 @@ module Bot
 			return screen
 		end
 
-		# ___________________________________
-		# loading - saving
-		# -----------------------------------
-		def save()
-			return
-		end
-
-		def close()
-			self.save()
-			# @users.delete(user_id) # To be uncommented once a persistant storage is in place
-		end
-	end
-end
+	end # User
+end # Core
+end #Giskard

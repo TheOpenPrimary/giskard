@@ -16,7 +16,7 @@
    limitations under the License.
 =end
 
-module Bot
+module Giskard
 	class Db
 		@@db=nil
 		@@queries={}
@@ -28,16 +28,17 @@ module Bot
 				"dbname"=>DBNAME,
 				"user"=>DBUSER,
 				"password"=>DBPWD,
-				"host"=>DBHOST, 
+				"host"=>DBHOST,
 				"port"=>DBPORT
 			)
 		end
 
 		def self.load_queries
-			Bot::Users.load_queries
+			Giskard::FB::User.load_queries
+			Giskard::TG::User.load_queries
 		end
 
-		def self.prepare(name,query)
+		def prepare(name,query)
 			@@queries[name]=query
 		end
 

@@ -17,22 +17,17 @@
 =end
 
 module Giskard
-	module FB
+	module Core
 		class Message
-			attr_accessor :id                # unique id of the message 
-			attr_accessor :seq               # id of the message in the conversation
+			attr_accessor :id                # unique id of the message
 			attr_accessor :text              # content of the message
 			attr_accessor :timestamp         # when was the message sent?
-			attr_accessor :id_user           # id of the sender
-			attr_accessor :user              # class User for the sender
-			attr_accessor :bot               # name of the bot
+			attr_accessor :messenger         # name of the messenger
 
-			def initialize(id_message, text, seq, bot)
-				@id         = id_message
-				@text       = text
-				@seq        = seq
-				@bot        = bot
-			end 
+			def initialize(id)
+				@id = id
+			end
+
 		end
 	end
 end

@@ -16,7 +16,7 @@
    limitations under the License.
 =end
 
-module Bot
+module Giskard
 	class Log < Logger
 		def initialize(*args)
 			super(::DEBUG ? STDOUT : STDERR)
