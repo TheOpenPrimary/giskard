@@ -24,8 +24,9 @@ module Giskard
 			attr_accessor :timestamp         # when was the message sent?
 			attr_accessor :messenger         # name of the messenger
 
-			def initialize(id)
-				@id = id
+			def initialize()
+				# @id = id
+				return true
 			end
 
 		end

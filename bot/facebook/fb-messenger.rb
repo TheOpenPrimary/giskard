@@ -149,7 +149,7 @@ module Giskard
 						user     = Giskard::FB::User.new(messaging.sender.id)
 						if not user.load then
 							user.create
-						elsif not user.already_answered? and not msg.nil? then
+						elsif not user.already_answered?(msg) and not msg.nil? then
 							screen        = Bot.nav.get(msg, user)
 							# send answer
 							process_msg(user.id,screen[:text],screen) unless screen[:text].nil?
@@ -164,14 +164,11 @@ module Giskard
 				uid=params['uid']
 				return if cmd.nil? or cmd.empty?
 				return if uid.nil? or uid.empty?
-				msg = Giskard::FB::Message.new(-1,cmd,-1)
+				msg = Giskard::FB::Message.new(cmd)
 				user     = Giskard::FB::User.new(uid)
 				screen = Bot.nav.get(msg, user)
 				process_msg(user.id,screen[:text],screen) unless screen[:text].nil?
 			end
-		ensure
-			Giskard::Db.close()
-		end	
 		end # post
 	end # class
 end # module FB

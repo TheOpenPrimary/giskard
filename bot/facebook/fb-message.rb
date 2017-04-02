@@ -29,7 +29,7 @@ def initialize(messaging)
     self.id   = nil
     self.seq  = nil
     self.messenger = FB_BOT_NAME
-    self.timestamp = messaging.timestamp
+    self.timestamp = messaging.timestamp/1000
     if not messaging.message.nil? then
         self.id   = messaging.message.mid
         self.seq  = messaging.message.seq
@@ -37,15 +37,13 @@ def initialize(messaging)
     elsif not messaging.postback.nil? then
         self.text = messaging.postback.payload
         self.postback  = Giskard::FB::Postback.new(messaging.postback)
+    else
+        self.id   = -1
+        self.seq  = -1
+        self.text = messaging
     end
-
 end
 
-def initialize(id, text, seq)
-    self.id   = id
-    self.seq  = seq
-    self.text = text
-end
 
 class Postback
     attr_accessor :payload           # payload parameter that was defined with the button

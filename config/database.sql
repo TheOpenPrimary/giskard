@@ -10,31 +10,33 @@ CHECK(
 
 CREATE TABLE fb_users (
     id bigint primary key,
-    usr_id integer not null,
     profile_pic text,
     locale character varying(30),
     timezone varchar(8),
     gender gender,
-        first_name character varying(30),
-        last_name character varying(30),
-        email character varying(30),
-        from_date timestamp without time zone DEFAULT now(),
-        last_date timestamp without time zone DEFAULT now(),
-        PRIMARY KEY (id),
-        CONSTRAINT users_check
-            CHECK (last_date >= from_date)
+    email character varying(30),
+    first_name character varying(30),
+    last_name character varying(30),
+    last_msg_time timestamp default now(),
+    from_date timestamp without time zone DEFAULT now(),
+    last_date timestamp without time zone DEFAULT now(),
+    CONSTRAINT users_check
+        CHECK (last_date >= from_date)
 
 );
 
 
 CREATE TABLE tg_users (
     id integer primary key,
-    usr_id integer not null,
     user_name character varying(30),
-    foreign key (usr_id)
-        references users(id)
-        on delete Cascade
-        on update cascade
+    first_name character varying(30),
+    last_name character varying(30),
+    email character varying(30),
+    last_msg_time timestamp default now(),
+    from_date timestamp without time zone DEFAULT now(),
+    last_date timestamp without time zone DEFAULT now(),
+    CONSTRAINT users_check
+        CHECK (last_date >= from_date)
 );
 
 

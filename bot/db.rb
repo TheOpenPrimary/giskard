@@ -21,7 +21,7 @@ module Giskard
 		@@db=nil
 		@@queries={}
 
-		def self.init
+		def initialize
 			return unless defined? DBNAME
 			Bot.log.debug "connect to database : #{DBNAME} with user : #{DBUSER}"
 			@@db=PG.connect(
@@ -46,7 +46,7 @@ module Giskard
 			@@db.close() unless @@db.nil?
 		end
 
-		def self.query(name,params)
+		def query(name,params)
 			Bot.log.info "#{__method__}: #{name} / values: #{params}"
 			@@db.exec_params(@@queries[name],params)
 		end

@@ -27,70 +27,75 @@ module Giskard
             attr_accessor :last_msg_time
 
 
-def self.initialize(id)
+def initialize(id)
     @id = id
+    @last_msg_time = 0
     super()
 end
 
 # look at the database whether the user has already been created
 # return the user in this case
 # return a nil if the user does not exist
-def self.load
+def load
     params = [
         @id,
     ]
     res = Bot.db.query("fb_user_select", params)
-    if res.nil?
-        return False
+    if res.num_tuples.zero? then
+        return false
     end
     @last_name = res[0]['last_name']
     @first_name = res[0]['first_name']
     @mail = res[0]['mail']
-    @id = res[0]['id']
-    @last_msg_time = res[0]['last_msg_time']
+    @id = res[0]['id'].to_i
+    @last_msg_time = DateTime.parse(res[0]['last_msg_time']).strftime('%s').to_i
     @messenger = FB_BOT_NAME
-    return True
+    return true
 end
 
 # create a user in the database
-def self.create
+def create
     # get info from facebook
-    res              = URI.parse("https://graph.facebook.com/v2.8/#{@fb_id}?fields=first_name,last_name&access_token=#{FB_PAGEACCTOKEN}").read
+    res              = URI.parse("https://graph.facebook.com/v2.8/#{@id}?fields=first_name,last_name&access_token=#{FB_PAGEACCTOKEN}").read
     r_user           = JSON.parse(res)
     r_user           = JSON.parse(JSON.dump(r_user), object_class: OpenStruct)
-    @first_name  = r_@first_name
-    @last_name   = r_@last_name
+    @first_name  = r_user.first_name
+    @last_name   = r_user.last_name
+    # @mail        = r_user.email
+    # @gender		 = (r_user.gender == "male")? 'm': "f"
+    # @timezone	 = r_user.timezone
+    # @locale		 = r_user.locale
     Bot.log.debug("New user : #{@first_name} #{@last_name}")
 
     # save in database
     params = [
         @id,
         self.first_name,
-        self.last_name,
-        self.mail
+        self.last_name
     ]
     Bot.db.query("fb_user_insert", params)
     @messenger = FB_BOT_NAME
 end
 
 # save in the database the user with its fsm
-def self.save
+def save
     params = [
         @id,
         @first_name,
         @last_name,
         @mail,
-        @last_msg_time
+        DateTime.strptime(@last_msg_time.to_s,'%s')
     ]
-    res = Giskard::Db.query("fb_user_update", params)
-    @id = res[0]['id']
+    res = Bot.db.query("fb_user_update", params)
 end
 
 
 # check if the message has already been answered
-def self.already_answered?(msg)
+def already_answered?(msg)
     return false if msg.seq ==-1 # external command
-    answered = @last_msg_time > -1 and @last_msg_time >= msg.timestamp
+    puts "last: #{@last_msg_time}"
+    puts msg.timestamp
+    answered = @last_msg_time > 0 and @last_msg_time >= msg.timestamp
     if answered then
         Bot.log.debug "Message already answered: #{@last_msg_time} and current msg time: #{msg.timestamp}"
     end
@@ -103,12 +108,13 @@ end
 def self.load_queries
     queries={
         "fb_user_select" => "SELECT * FROM fb_users where id=$1",
-        "fb_user_insert"  => "INSERT INTO fb_users (id, first_name, last_name, email) VALUES ($1, $2, $3);",
+        "fb_user_insert"  => "INSERT INTO fb_users (id, first_name, last_name) VALUES ($1, $2, $3);",
         "fb_user_update"  => "UPDATE fb_users SET
                 first_name=$2,
                 last_name=$3,
                 email=$4,
-                last_msg=$5"
+                last_msg_time=$5
+                WHERE id=$1"
     }
     queries.each { |k,v| Bot.db.prepare(k,v) }
 end
