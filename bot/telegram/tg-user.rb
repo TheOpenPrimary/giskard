@@ -24,12 +24,14 @@ module TG
     	class User < Giskard::Core::User
 
             attr_accessor :id   # id in the database = id in Facebook
-            attr_accessor :mail
-            attr_accessor :last_msg_time
+            attr_accessor :username
 
 
-def self.initialize(id)
-    @id = id
+def self.initialize(message)
+    @id = message.from.id
+    @username   = message.from.username
+    @last_name  = message.from.last_name
+    @first_name = message.from.first_name
     super()
 end
 
@@ -40,27 +42,20 @@ def self.load
     params = [
         @id,
     ]
-    res = Bot.db.query("TG_user_select", params)
+    res = Bot.db.query("tg_user_select", params)
     if res.nil?
         return False
     end
     @last_name = res[0]['last_name']
     @first_name = res[0]['first_name']
-    @mail = res[0]['mail']
     @id = res[0]['id']
-    @last_msg_time = res[0]['last_msg_time']
+    @username = res[0]['user_name']
     @messenger = TG_BOT_NAME
     return True
 end
 
 # create a user in the database
 def self.create
-    # get info from facebook
-    res              = URI.parse("https://graph.facebook.com/v2.8/#{@TG_id}?fields=first_name,last_name&access_token=#{TG_PAGEACCTOKEN}").read
-    r_user           = JSON.parse(res)
-    r_user           = JSON.parse(JSON.dump(r_user), object_class: OpenStruct)
-    @first_name  = r_@first_name
-    @last_name   = r_@last_name
     Bot.log.debug("New user : #{@first_name} #{@last_name}")
 
     # save in database
@@ -68,9 +63,9 @@ def self.create
         @id,
         self.first_name,
         self.last_name,
-        self.mail
+        self.username
     ]
-    Bot.db.query("TG_user_insert", params)
+    Bot.db.query("tg_user_insert", params)
     @messenger = TG_BOT_NAME
 end
 
@@ -80,36 +75,24 @@ def self.save
         @id,
         @first_name,
         @last_name,
-        @mail,
-        @last_msg_time
+        @username
     ]
-    res = Bot.db.query("TG_user_update", params)
-    @id = res[0]['id']
+    # TODO update timestamp
+    res = Bot.db.query("tg_user_update", params)
 end
 
-
-# check if the message has already been answered
-def self.already_answered?(msg)
-    return false if msg.seq ==-1 # external command
-    answered = @last_msg_time > -1 and @last_msg_time >= msg.timestamp
-    if answered then
-        Bot.log.debug "Message already answered: #{@last_msg_time} and current msg time: #{msg.timestamp}"
-    end
-    @last_msg_time = [@last_msg_time, msg.timestamp].max
-    return answered
-end
 
 
 # database queries to prepare
 def self.load_queries
     queries={
-        "TG_user_select" => "SELECT * FROM TG_users where id=$1",
-        "TG_user_insert"  => "INSERT INTO TG_users (id, first_name, last_name, email) VALUES ($1, $2, $3);",
-        "TG_user_update"  => "UPDATE TG_users SET
+        "tg_user_select" => "SELECT * FROM tg_users where id=$1",
+        "tg_user_insert"  => "INSERT INTO tg_users (id, first_name, last_name, username) VALUES ($1, $2, $3, $4);",
+        "tg_user_update"  => "UPDATE TG_users SET
                 first_name=$2,
                 last_name=$3,
-                email=$4,
-                last_msg=$5"
+                user_name=$4
+                WHERE id=$1"
     }
     queries.each { |k,v| Bot.db.prepare(k,v) }
 end

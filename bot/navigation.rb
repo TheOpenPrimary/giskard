@@ -104,9 +104,6 @@ module Giskard
 			_input       = user.state['expected_input']
 			_callback    = self.to_callback(user.state['callback'].to_s)
 
-			# we check that this message has not already been answered (i.e. bot sending a msg we already processed)
-			return nil,nil if user.already_answered(msg) and not DEBUG
-
 			# if user.seq == 1 and not msg.seq ==-1 then
 			#   Bot.log.warn "Bot upgrade detected"
 			#   msg.seq =-1
@@ -248,8 +245,8 @@ module Giskard
 			previous=caller_locations(1,1)[0].label
 			user.state['current'] = screen[:id]
 			unless IGNORE_CONTEXT.include?(self.context(screen[:id])) then
-				user.previous_screen = screen
-				user.previous_state  = user.state.clone
+				user.state['previous_screen'] = screen
+				# user.previous_state  = user.state.clone
 			end
 			if !callback.nil? && previous!=callback && self.respond_to?(callback)
 				screen=self.method(callback).call(msg,user,screen.clone)
@@ -298,11 +295,10 @@ module Giskard
 
 		def format_answer(screen,user)
 			Bot.log.info "#{__method__}: #{screen[:id]}"
-			screen[:text]=screen[:text] % {
-				firstname:  user.first_name,
+			screen[:text]=screen[:text] % { # is that really useful ?
+				firstname:  user.first_name, # better to keep using user?
 				lastname:   user.last_name,
-				id:         user.id,
-				username:   user.username
+				id:         user.id
 			} unless screen.nil? or screen[:text].nil?
 			locale=self.get_locale(user)
 			kbd=@keyboards[locale][screen[:id]].clone if @keyboards[locale][screen[:id]]

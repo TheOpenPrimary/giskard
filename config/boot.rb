@@ -15,3 +15,4 @@ require 'logger'
 require 'ostruct' if FBMESSENGER
 require 'rest_client' if FBMESSENGER
 require 'pg'
+require 'yaml'

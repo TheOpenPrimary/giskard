@@ -11,12 +11,12 @@ CHECK(
 CREATE TABLE fb_users (
     id bigint primary key,
     profile_pic text,
-    locale character varying(30),
+    locale character varying(200),
     timezone varchar(8),
     gender gender,
-    email character varying(30),
-    first_name character varying(30),
-    last_name character varying(30),
+    email character varying(200),
+    first_name character varying(200),
+    last_name character varying(200),
     last_msg_time timestamp default now(),
     from_date timestamp without time zone DEFAULT now(),
     last_date timestamp without time zone DEFAULT now(),
@@ -40,61 +40,16 @@ CREATE TABLE tg_users (
 );
 
 
-CREATE TABLE categories(
-    id serial PRIMARY KEY,
-    name VARCHAR(20),
-    parent integer,
-    foreign key (parent)
-        references categories(id)
-        on delete set null
-        on update cascade
+
+CREATE TABLE states (
+    id serial primary key,
+    last_msg_id bigint default 0,
+    current text,
+    expected_input character varying(50),
+    expected_size smallint,
+    buffer text,
+    callback text,
+    previous_screen text,
+    user_id bigint,
+    messenger  character varying(50)
 );
-
-
-CREATE TABLE images(
-    id serial PRIMARY KEY,
-    url VARCHAR(200),
-    category integer,
-    foreign key (category)
-            references categories(id)
-            on delete Cascade
-            on update cascade
-);
-
-
-
-
-
-
-CREATE TABLE messages(
-usr_id integer not null,
-msg varchar(300),
-img_id integer,
-date timestamp DEFAULT current_timestamp,
-primary key (usr_id, date),
-foreign key (usr_id)
-        references users(id)
-        on delete Cascade
-        on update cascade,
-foreign key (img_id)
-        references images(id)
-        on delete Cascade
-        on update cascade
-);
-
-
-CREATE TABLE feedback(
-id serial PRIMARY KEY,
-usr_id integer not null,
-useful boolean,
-msg text
-);
--- TODO
--- delimiter //
--- CREATE trigger updateLastDate
--- after insert on doleances
--- begin
--- for each row
--- update users set last_date = now() where id = new.usr_id;
--- end;//
--- delimiter ;

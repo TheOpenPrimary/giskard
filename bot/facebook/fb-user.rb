@@ -50,6 +50,7 @@ def load
     @id = res[0]['id'].to_i
     @last_msg_time = DateTime.parse(res[0]['last_msg_time']).strftime('%s').to_i
     @messenger = FB_BOT_NAME
+    super
     return true
 end
 
@@ -61,6 +62,7 @@ def create
     r_user           = JSON.parse(JSON.dump(r_user), object_class: OpenStruct)
     @first_name  = r_user.first_name
     @last_name   = r_user.last_name
+    @last_msg_time = 1000000
     # @mail        = r_user.email
     # @gender		 = (r_user.gender == "male")? 'm': "f"
     # @timezone	 = r_user.timezone
@@ -70,11 +72,13 @@ def create
     # save in database
     params = [
         @id,
-        self.first_name,
-        self.last_name
+        @first_name,
+        @last_name,
+        DateTime.strptime(@last_msg_time.to_s,'%s')
     ]
     Bot.db.query("fb_user_insert", params)
     @messenger = FB_BOT_NAME
+    super
 end
 
 # save in the database the user with its fsm
@@ -86,21 +90,22 @@ def save
         @mail,
         DateTime.strptime(@last_msg_time.to_s,'%s')
     ]
-    res = Bot.db.query("fb_user_update", params)
+    # TODO update timestamp
+    Bot.db.query("fb_user_update", params)
+    super
 end
 
 
 # check if the message has already been answered
 def already_answered?(msg)
     return false if msg.seq ==-1 # external command
-    puts "last: #{@last_msg_time}"
-    puts msg.timestamp
-    answered = @last_msg_time > 0 and @last_msg_time >= msg.timestamp
-    if answered then
-        Bot.log.debug "Message already answered: #{@last_msg_time} and current msg time: #{msg.timestamp}"
+    if @last_msg_time > 0 and @last_msg_time >= msg.timestamp then
+        Bot.log.debug "Message already answered: last msg time: #{@last_msg_time} and this msg time: #{msg.timestamp}"
+        return true
+    else
+        @last_msg_time = msg.timestamp
+        return false
     end
-    @last_msg_time = [@last_msg_time, msg.timestamp].max
-    return answered
 end
 
 
@@ -108,7 +113,7 @@ end
 def self.load_queries
     queries={
         "fb_user_select" => "SELECT * FROM fb_users where id=$1",
-        "fb_user_insert"  => "INSERT INTO fb_users (id, first_name, last_name) VALUES ($1, $2, $3);",
+        "fb_user_insert"  => "INSERT INTO fb_users (id, first_name, last_name, last_msg_time) VALUES ($1, $2, $3, $4);",
         "fb_user_update"  => "UPDATE fb_users SET
                 first_name=$2,
                 last_name=$3,

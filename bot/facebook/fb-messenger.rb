@@ -149,7 +149,8 @@ module Giskard
 						user     = Giskard::FB::User.new(messaging.sender.id)
 						if not user.load then
 							user.create
-						elsif not user.already_answered?(msg) and not msg.nil? then
+						end
+						if not user.already_answered?(msg) and not msg.nil? then
 							screen        = Bot.nav.get(msg, user)
 							# send answer
 							process_msg(user.id,screen[:text],screen) unless screen[:text].nil?

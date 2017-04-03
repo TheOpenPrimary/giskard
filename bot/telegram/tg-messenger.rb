@@ -139,17 +139,11 @@ module Giskard
 			error!('401 Unauthorized', 401) unless authorized
 			begin
 				Bot::Db.init()
-				update = Telegram::Bot::Types::Update.new(params)
-				text            = update.message.text
-				id              = update.message.chat.id
-				id_receiv       = update.message.from.id
-				user            = Giskard::User.new(id_receiv, TG_BOT_NAME)
-				user.username   = update.message.from.username
-				user.last_name  = update.message.from.last_name
-				user.first_name = update.message.from.first_name
-				msg             = Giskard::TG::Message.new(id, text, id, TG_BOT_NAME)
-				user,screen=Bot.nav.get(msg, user)
-				msg,options=format_answer(screen)
+				update 		= Telegram::Bot::Types::Update.new(params)
+				user        = Giskard::TG::User.new(update.message)
+				msg         = Giskard::TG::Message.new(update.message)
+				user,screen = Bot.nav.get(msg, user)
+				msg,options = format_answer(screen)
 				send_msg(update.message.chat.id,msg,options) unless msg.nil?
 			rescue Exception=>e
 				Bot.log.fatal "#{e.message}\n#{e.backtrace.inspect}"
@@ -167,17 +161,11 @@ module Giskard
 					Bot.log.error "Message from group chat not supported:\n#{update.inspect}"
 					error! "Msg from group chat not supported: #{update.inspect}", 200 # if you put an error code here, telegram will keep sending you the same msg until you die
 				end
-				text            = update.message.text
-				id              = update.message.chat.id
-				id_receiv       = update.message.from.id
-				user            = Giskard::User.new()
-				user.id         = id
-				user.bot        = TG_BOT_NAME
-				user.username   = update.message.from.username
-				user.last_name  = update.message.from.last_name
-				user.first_name = update.message.from.first_name
-				msg             = Giskard::TG::Message.new(id, text, id, TG_BOT_NAME)
-
+				user            = Giskard::TG::User.new(update.message)
+				msg             = Giskard::TG::Message.new(update.message)
+				if not user.load then
+					user.create
+				end
 				# handle new message
 				screen     = Bot.nav.get(msg, user)
 

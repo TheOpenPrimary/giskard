@@ -34,6 +34,7 @@ module Giskard
 		end
 
 		def self.load_queries
+			Giskard::Core::User.load_queries
 			Giskard::FB::User.load_queries
 			Giskard::TG::User.load_queries
 		end

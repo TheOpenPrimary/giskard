@@ -22,44 +22,12 @@ module Giskard
     module TG
     	class Message < Giskard::Core::Message
 
-            attr_accessor :seq   # id in the database = id in Facebook
-            attr_accessor :postback
 
-def initialize(messaging)
-    self.id   = nil
-    self.seq  = nil
-    self.messenger = TG_BOT_NAME
-    self.timestamp = messaging.timestamp
-    if not messaging.message.nil? then
-        self.id   = messaging.message.mid
-        self.seq  = messaging.message.seq
-        self.text = messaging.message.text
-    elsif not messaging.postback.nil? then
-        self.text = messaging.postback.payload
-        self.postback  = Giskard::TG::Postback.new(messaging.postback)
-    end
-
+def initialize(message)
+    @text            = update.message.text
+    @id              = update.message.chat.id
 end
 
-def initialize(id, text, seq)
-    self.id   = id
-    self.seq  = seq
-    self.text = text
-end
-
-class Postback
-    attr_accessor :payload           # payload parameter that was defined with the button
-    attr_accessor :referral          # Comes only with Get Started postback and if an optional ref param was passed from the entry point, such as m.me link
-    attr_accessor :source            # shortlink
-    attr_accessor :type         	 # open thread
-
-    def initialize(postback)
-        @payload   = postback.payload
-        @ref       = postback.referral.nil? ? nil : postback.referral.ref
-        @source    = postback.referral.nil? ? nil : postback.referral.source
-        @type      = postback.referral.nil? ? nil : postback.referral.type
-    end
-end
 
 
         end # end class
