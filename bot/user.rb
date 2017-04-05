@@ -23,6 +23,8 @@ module Giskard
 	module Core
 	class User
 		# general attr
+		attr_accessor :uid
+		attr_accessor :email
 		attr_accessor :first_name
 		attr_accessor :last_name
 		attr_accessor :settings
@@ -32,11 +34,11 @@ module Giskard
 		# FSM
 		attr_accessor :state
 		attr_accessor :state_id
-		# attr_accessor :previous_state
-		# attr_accessor :previous_state_id
-
 
 		def initialize()
+			@first_name = ""
+			@last_name = ""
+			@email = ""
 			self.initialize_fsm()
 			@settings={
 				'blocked'=>{ 'abuse'=>false }, # the user has clearly done bad things
@@ -84,9 +86,18 @@ module Giskard
 
 
 		def create
+			params = [
+				@first_name,
+				@last_name,
+				@email
+			]
+			res = Bot.db.query("user_insert", params)
+			@uid = res[0]['id'];
+
+
 			# current state
 			params = [
-				@id,
+				@uid,
 				@messenger
 			]
 			res = Bot.db.query("user_insert_state", params)
@@ -96,6 +107,7 @@ module Giskard
 
 		# save the state
 		def save
+
 			# current state
 			params = [
 		        @state['last_msg_id'],
@@ -105,24 +117,34 @@ module Giskard
 				@state['buffer'],
 				@state['callback'],
 				YAML::dump(@state['previous_screen']),
-				@id,
-				@messenger
+				@uid
 		    ]
 		    Bot.db.query("user_update_state", params)
+
+			params = [
+				@uid,
+				@first_name,
+				@last_name,
+				@email,
+				Time.now()
+			]
+			Bot.db.query("user_update", params)
 		end
 
-		# load the state
+		# load the user
 		def load
-			# current state
 			params = [
-				@id,
-				@messenger
+				@uid
 			]
-			res = Bot.db.query("user_select_state", params)
-
+			res = Bot.db.query("user_select", params)
+			puts "Loading users... "
 			if res.num_tuples.zero? then
 		        return false
 		    end
+			puts res[0]
+			@first_name = res[0]['first_name']
+			@last_name = res[0]['last_name']
+			@email = res[0]['email']
 		    @state['last_msg_id'] = res[0]['last_msg_id'].to_i
 			@state['current'] = YAML::dump(res[0]['current'])
 			@state['expected_input'] = res[0]['expected_input']
@@ -137,8 +159,15 @@ module Giskard
 		# database queries to prepare
 		def self.load_queries
 		    queries={
-		        "user_select_state" => "SELECT * FROM states where user_id=$1 and messenger=$2",
-		        "user_insert_state"  => "INSERT INTO states (user_id, messenger) VALUES ($1, $2) RETURNING id;",
+				"user_select" => "SELECT * FROM users, states where users.id=$1 and states.uid=$1",
+		        "user_insert"  => "INSERT INTO users (first_name, last_name, email) VALUES ($1, $2, $3) RETURNING id;",
+		        "user_update"  => "UPDATE users SET
+						first_name=$2,
+						last_name=$3,
+		                email=$4,
+						last_date=$5
+		                WHERE id=$1",
+		        "user_insert_state"  => "INSERT INTO states (uid, messenger) VALUES ($1, $2) RETURNING id;",
 		        "user_update_state"  => "UPDATE states SET
 						last_msg_id=$1,
 						current=$2,
@@ -147,7 +176,7 @@ module Giskard
 						buffer=$5,
 						callback=$6,
 						previous_screen=$7
-						WHERE user_id=$8 and messenger=$9"
+						WHERE uid=$8"
 		    }
 		    queries.each { |k,v| Bot.db.prepare(k,v) }
 		end
