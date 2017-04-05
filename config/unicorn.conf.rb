@@ -64,7 +64,7 @@ end
 # What to do after we fork a worker
 after_fork do |server, worker|
   defined?(ActiveRecord::Base) && ActiveRecord::Base.establish_connection
-  Bot::Db.load_queries()
+  Giskard::Db.load_queries()
 
   # Create worker pids too
   child_pid = server.config[:pid].sub(/pid$/, "worker.#{worker.nr}.pid")

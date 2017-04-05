@@ -16,11 +16,20 @@
    limitations under the License.
 =end
 
+
+
 module Giskard
-	class Log < Logger
-		def initialize(*args)
-			super(::DEBUG ? STDOUT : STDERR)
-			self.level = ::DEBUG ? Logger::DEBUG : Logger::WARN
-		end
-	end
+    module TG
+    	class Message < Giskard::Core::Message
+
+
+def initialize(message)
+    @text            = update.message.text
+    @id              = update.message.chat.id
 end
+
+
+
+        end # end class
+    end # end module TG
+end # module Bot

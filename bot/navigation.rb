@@ -16,7 +16,7 @@
    limitations under the License.
 =end
 
-module Bot
+module Giskard
 	class Navigation
 		class << self
 			attr_accessor :nav
@@ -30,7 +30,6 @@ module Bot
 		end
 
 		def initialize
-			@users = Bot::Users.new()
 			@answers = {}
 			@keyboards = {}
 			@screens=Bot.screens
@@ -100,15 +99,10 @@ module Bot
 		# @user is a class User. It is the sender. It should have an id
 		# return the next screen
 		def get(msg, user)
-			Bot.log.debug "Read message from user #{user.id} to bot #{msg.bot} with seq #{msg.seq}: #{msg.text}"
+			Bot.log.debug "Read message from user #{user.id}: #{msg.text}"
 
-			# load user if registered
-			user = @users.open(user)
 			_input       = user.state['expected_input']
 			_callback    = self.to_callback(user.state['callback'].to_s)
-
-			# we check that this message has not already been answered (i.e. bot sending a msg we already processed)
-			return nil,nil if user.already_answered(msg) and not DEBUG
 
 			# if user.seq == 1 and not msg.seq ==-1 then
 			#   Bot.log.warn "Bot upgrade detected"
@@ -135,8 +129,6 @@ module Bot
 
 			# we didn't expect this message
 			return self.dont_understand(msg, user)
-
-			@users.close(user)
 		end
 
 		def is_reset(text)
@@ -253,8 +245,8 @@ module Bot
 			previous=caller_locations(1,1)[0].label
 			user.state['current'] = screen[:id]
 			unless IGNORE_CONTEXT.include?(self.context(screen[:id])) then
-				user.previous_screen = screen
-				user.previous_state  = user.state.clone
+				user.state['previous_screen'] = screen
+				# user.previous_state  = user.state.clone
 			end
 			if !callback.nil? && previous!=callback && self.respond_to?(callback)
 				screen=self.method(callback).call(msg,user,screen.clone)
@@ -303,11 +295,10 @@ module Bot
 
 		def format_answer(screen,user)
 			Bot.log.info "#{__method__}: #{screen[:id]}"
-			screen[:text]=screen[:text] % {
-				firstname:  user.first_name,
+			screen[:text]=screen[:text] % { # is that really useful ?
+				firstname:  user.first_name, # better to keep using user?
 				lastname:   user.last_name,
-				id:         user.id,
-				username:   user.username
+				id:         user.id
 			} unless screen.nil? or screen[:text].nil?
 			locale=self.get_locale(user)
 			kbd=@keyboards[locale][screen[:id]].clone if @keyboards[locale][screen[:id]]

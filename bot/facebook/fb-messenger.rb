@@ -16,10 +16,12 @@
    limitations under the License.
 =end
 
-require_relative 'navigation.rb'
+require_relative '../navigation.rb'
 
 module Giskard
-	class FBMessengerBot < Grape::API
+	module FB
+
+	class Messenger < Grape::API
 		prefix FB_WEBHOOK_PREFIX.to_sym
 		format :json
 
@@ -28,18 +30,17 @@ module Giskard
 			Bot.log.debug payload
 			if file_url.nil? then
 				res = RestClient.post "https://graph.facebook.com/v2.6/me/#{type}?access_token=#{FB_PAGEACCTOKEN}", payload.to_json, :content_type => :json
-			else # image upload 
+			else # image upload
 				params={"recipient"=>payload['recipient'], "message"=>payload['message'], "filedata"=>File.new(file_url,'rb'),"multipart"=>true}
 				res = RestClient.post "https://graph.facebook.com/v2.6/me/#{type}?access_token=#{FB_PAGEACCTOKEN}",params
 			end
 			Bot.log.debug "sending done (code: #{res.code})"
 		end
 
-		def self.init() 
+		def self.init
 			payload={ "greeting"=>[
-				{ "locale":"default","text"=>"Bonjour {{user_first_name}}, merci pour votre intérêt pour le jugement majoritaire !" }
-			]}
-			Giskard::FBMessengerBot.send(payload,"messenger_profile")
+				{ "locale"=>"default","text"=>"Bonjour {{user_first_name}}, merci pour votre intérêt pour le jugement majoritaire !" }]}
+			Giskard::FB::Messenger.send(payload,"messenger_profile")
 		end
 
 		helpers do
@@ -71,20 +72,20 @@ module Giskard
 				else
 					msg["message"]={ "text"=>text }
 				end
-				Giskard::FBMessengerBot.send(msg)
+				Giskard::FB::Messenger.send(msg)
 			end
 
 			def send_typing(id)
-				Giskard::FBMessengerBot.send({"recipient"=>{"id"=>id},"sender_action"=>"typing_on"})
+				Giskard::FB::Messenger.send({"recipient"=>{"id"=>id},"sender_action"=>"typing_on"})
 			end
 
 			def send_image(id,img_url)
 				payload={"recipient"=>{"id"=>id},"message"=>{"attachment"=>{"type"=>"image","payload"=>{}}}}
 				if not img_url.match(/http/).nil? then
 					payload["message"]["attachment"]["payload"]={"url"=>img_url}
-					Giskard::FBMessengerBot.send(payload)
+					Giskard::FB::Messenger.send(payload)
 				else
-					Giskard::FBMessengerBot.send(payload,"messages",img_url)
+					Giskard::FB::Messenger.send(payload,"messages",img_url)
 				end
 			end
 
@@ -94,8 +95,8 @@ module Giskard
 				max=lines.length
 				idx=0
 				image=false
-				kbd=nil 
-				attachment=nil 
+				kbd=nil
+				attachment=nil
 				lines.each do |l|
 					next if l.empty?
 					idx+=1
@@ -144,28 +145,19 @@ module Giskard
 				entries     = params['entry']
 				entries.each do |entry|
 					entry.messaging.each do |messaging|
-						Bot.log.debug "#{messaging}"
-						id_sender = messaging.sender.id
-						id_receiv = messaging.recipient.id
-						id        = messaging.message.nil? ? nil : messaging.message.mid
-						seq       = messaging.message.nil? ? nil : messaging.message.seq
-						timestamp = messaging.timestamp
-						postback  = messaging.postback
-						if not messaging.message.nil? then
-							msg = Giskard::FB::Message.new(id, messaging.message.text, seq, FB_BOT_NAME)
-						elsif not postback.nil? then
-							msg = Giskard::FB::Message.new(id, postback.payload, seq, FB_BOT_NAME)
+						msg = Giskard::FB::Message.new(messaging)
+						user     = Giskard::FB::User.new(messaging.sender.id)
+						if not user.load then
+							user.create
 						end
-						user     = Bot::User.new()
-						user.id  = id_sender
-						user.bot = FB_BOT_NAME
-						if not msg.nil? then
-							# read message
-							msg.timestamp = timestamp
+						if not user.already_answered?(msg) and not msg.nil? then
 							screen        = Bot.nav.get(msg, user)
 							# send answer
 							process_msg(user.id,screen[:text],screen) unless screen[:text].nil?
 						end
+						user.save
+						user = nil
+						msg = nil
 					end
 				end
 			elsif object=='api' then # api call / not from messenger
@@ -173,12 +165,12 @@ module Giskard
 				uid=params['uid']
 				return if cmd.nil? or cmd.empty?
 				return if uid.nil? or uid.empty?
-				msg = Giskard::FB::Message.new(nil,cmd,-1,FB_BOT_NAME)
-				user     = Bot::User.new()
-				user.id  = uid
+				msg = Giskard::FB::Message.new(cmd)
+				user     = Giskard::FB::User.new(uid)
 				screen = Bot.nav.get(msg, user)
 				process_msg(user.id,screen[:text],screen) unless screen[:text].nil?
 			end
-		end
-	end
-end
+		end # post
+	end # class
+end # module FB
+end # module Bot
